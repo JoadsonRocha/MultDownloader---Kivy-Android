@@ -294,9 +294,9 @@ class MultDownloadApp(MDApp):
             halign='center'
         )
         self.drawer_panel.add_widget(drawer_footer)
-
         self.drawer_overlay.add_widget(self.drawer_panel)
-        self.root_layout.add_widget(self.drawer_overlay)
+
+        # O drawer_overlay NÃO é adicionado no root_layout inicialmente para não bloquear cliques
 
     def toggle_drawer(self, force_state=None):
         if force_state is not None:
@@ -305,9 +305,11 @@ class MultDownloadApp(MDApp):
             self.drawer_open = not self.drawer_open
 
         if self.drawer_open:
-            self.drawer_overlay.pos_hint = {'x': 0, 'y': 0}
+            if self.drawer_overlay not in self.root_layout.children:
+                self.root_layout.add_widget(self.drawer_overlay)
         else:
-            self.drawer_overlay.pos_hint = {'x': -1, 'y': 0}
+            if self.drawer_overlay in self.root_layout.children:
+                self.root_layout.remove_widget(self.drawer_overlay)
 
     def _on_drawer_item_click(self, screen_name):
         self.toggle_drawer(False)
