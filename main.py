@@ -1,268 +1,424 @@
-from kivymd.app import MDApp
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
-from kivy.uix.button import Button
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.progressbar import ProgressBar
-from kivy.core.window import Window
-from kivy.clock import Clock
-from kivy.uix.popup import Popup
-from kivy.utils import platform
-from kivy.uix.image import Image  # Usando Image do Kivy
-from kivy.properties import BooleanProperty
-from kivymd.uix.button import MDRaisedButton  # Usando botão do KivyMD
-from kivymd.uix.menu import MDDropdownMenu  # Usando Menu do KivyMD
-from kivymd.theming import ThemeManager  # Para gerenciar o tema
-from plyer import notification  # Para notificações no Android
-import threading
 import os
-from yt_dlp import YoutubeDL
-import re
+import sys
 
-# Verifica se está no Android e solicita permissões
-if platform == 'android':
-    from android.permissions import request_permissions, Permission
-    request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
+from kivy.app import App
+from kivy.core.window import Window
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.screenmanager import ScreenManager, SlideTransition
+from kivy.uix.label import Label
+from kivy.uix.button import Button
+from kivy.uix.image import Image
+from kivy.uix.modalview import ModalView
+from kivy.clock import Clock
+from kivy.graphics import Color, Rectangle, RoundedRectangle
 
-    # Configura o aplicativo para abrir em tela cheia
-    from android import android_fullscreen
-    android_fullscreen.enable_fullscreen()
+from core.platform_helper import PlatformHelper
+from core.downloader import DownloaderEngine
+from core.history_manager import HistoryManager
+from ui.theme import Theme
+from ui.components import CustomButton, RoundedCard
+from ui.screens.browser_screen import BrowserScreen
+from ui.screens.single_download import SingleDownloadScreen
+from ui.screens.playlist_screen import PlaylistScreen
+from ui.screens.audio_screen import AudioScreen
+from ui.screens.history_screen import HistoryScreen
+from ui.screens.settings_screen import SettingsScreen
+from ui.screens.developer_screen import DeveloperScreen
 
-class MultDownloaderApp(MDApp):
-    dark_mode = BooleanProperty(False)  # Propriedade para alternar entre temas
+class MultDownloadApp(App):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.title = "MultDownload 4.2.0"
+        self.icon = "logo.png" if os.path.exists("logo.png") else "logo.ico"
+        self.is_dark = False
+
+        # Instâncias do Core
+        self.downloader = DownloaderEngine()
+        self.history = HistoryManager()
+
+        # Drawer State
+        self.drawer_open = False
 
     def build(self):
-        print("Iniciando a aplicação...")
-        self.title = "MultDownloader"
-        self.icon = "logo.ico"  # Ícone personalizado da aplicação
-        Window.clearcolor = (1, 1, 1, 1)  # Fundo branco (tema claro padrão)
+        # Permissões Android
+        PlatformHelper.request_android_permissions()
 
-        # Layout principal
-        self.layout = FloatLayout()
+        # Configurações de Janela
+        Window.clearcolor = Theme.get_bg(self.is_dark)
 
-        # Adiciona a imagem de fundo
-        background = Image(
-            source='background.jpg',  # Nome da imagem de fundo
-            allow_stretch=True,  # Permite que a imagem estique para cobrir a tela
-            keep_ratio=False,  # Não mantém a proporção da imagem
-            size_hint=(1, 1)  # Cobre toda a tela
+        # Layout Raiz
+        self.root_layout = FloatLayout()
+
+        # Layout Principal (Conteúdo Vertical)
+        self.main_box = BoxLayout(orientation='vertical', spacing=0)
+
+        # 1. Top Bar / Cabeçalho
+        self.top_bar = BoxLayout(
+            orientation='horizontal',
+            size_hint_y=None,
+            height=54,
+            padding=[10, 6, 10, 6],
+            spacing=8
         )
-        self.layout.add_widget(background)
+        self._update_top_bar_canvas()
+        self.top_bar.bind(pos=self._update_top_bar_canvas, size=self._update_top_bar_canvas)
 
-        # Campo de entrada da URL
-        self.url_input = TextInput(
-            hint_text='Cole a URL do vídeo',
-            size_hint=(0.8, None),
-            height=40,
-            pos_hint={'center_x': 0.5, 'center_y': 0.6},
-            background_color=(0.9, 0.9, 0.9, 1),
-            foreground_color=(0, 0, 0, 1),
-            background_normal='',
-            padding=[10, 10]
+        # Botão Menu Hambúrguer (☰)
+        self.btn_menu = CustomButton(
+            text="☰",
+            font_size="20sp",
+            bg_color=Theme.get_input_bg(self.is_dark),
+            text_color=Theme.get_text(self.is_dark),
+            size_hint=(None, 1),
+            width=42,
+            radius=[8, 8, 8, 8]
         )
-        self.layout.add_widget(self.url_input)
+        self.btn_menu.bind(on_release=lambda x: self.toggle_drawer())
+        self.top_bar.add_widget(self.btn_menu)
 
-        # Botão de download
-        self.download_button = MDRaisedButton(
-            text='Baixar',
-            size_hint=(0.5, None),
-            height=40,
-            pos_hint={'center_x': 0.5, 'center_y': 0.5},
-            md_bg_color=(0.2, 0.6, 0.2, 1),
-            theme_text_color="Custom",
-            text_color=(1, 1, 1, 1),
+        # Logo Ícone
+        logo_path = "logo.png" if os.path.exists("logo.png") else "logo.ico"
+        self.logo_img = Image(
+            source=logo_path,
+            size_hint=(None, 1),
+            width=36,
+            allow_stretch=True
         )
-        self.download_button.bind(on_press=self.iniciar_download)
-        self.layout.add_widget(self.download_button)
+        self.top_bar.add_widget(self.logo_img)
 
-        # Imagem de qualidade no canto superior direito
-        self.qualidade_img = Image(
-            source='config.png',  # Ícone de qualidade
-            size_hint=(None, None),
-            size=(40, 40),
-            pos_hint={'right': 0.98, 'top': 0.98}
+        # Título do App
+        self.title_label = Label(
+            text="[b][color=2196F3]Mult[/color][color=FA5858]Download[/color][/b] [size=12sp]4.2.0[/size]",
+            markup=True,
+            font_size="16sp",
+            halign='left',
+            valign='middle',
+            size_hint_x=0.7
         )
-        self.qualidade_img.bind(on_touch_down=self.mostrar_opcoes_qualidade)  # Abre o menu ao clicar
-        self.layout.add_widget(self.qualidade_img)
+        self.title_label.bind(size=lambda *x: setattr(self.title_label, 'text_size', (self.title_label.width, None)))
+        self.top_bar.add_widget(self.title_label)
 
-        # Barra de progresso
-        self.progress_bar = ProgressBar(
-            max=100,
-            size_hint=(0.8, None),
-            height=20,
-            pos_hint={'center_x': 0.5, 'center_y': 0.4},
+        # Botão Tema (Sol / Lua)
+        self.btn_theme = CustomButton(
+            text="☀️" if not self.is_dark else "🌙",
+            font_size="16sp",
+            bg_color=Theme.get_input_bg(self.is_dark),
+            text_color=Theme.get_text(self.is_dark),
+            size_hint=(None, 1),
+            width=42,
+            radius=[8, 8, 8, 8]
         )
-        self.layout.add_widget(self.progress_bar)
+        self.btn_theme.bind(on_release=lambda x: self.toggle_theme())
+        self.top_bar.add_widget(self.btn_theme)
 
-        # Label de status
-        self.status_label = Label(
-            text="",
-            size_hint=(0.8, None),
-            height=30,
-            pos_hint={'center_x': 0.5, 'center_y': 0.35},
-            color=(0, 0, 0, 1)
+        self.main_box.add_widget(self.top_bar)
+
+        # 2. Screen Manager (Telas)
+        self.sm = ScreenManager(transition=SlideTransition(duration=0.2))
+        
+        self.screen_browser = BrowserScreen(self)
+        self.screen_single = SingleDownloadScreen(self)
+        self.screen_playlist = PlaylistScreen(self)
+        self.screen_audio = AudioScreen(self)
+        self.screen_history = HistoryScreen(self)
+        self.screen_settings = SettingsScreen(self)
+        self.screen_developer = DeveloperScreen(self)
+
+        self.sm.add_widget(self.screen_browser)
+        self.sm.add_widget(self.screen_single)
+        self.sm.add_widget(self.screen_playlist)
+        self.sm.add_widget(self.screen_audio)
+        self.sm.add_widget(self.screen_history)
+        self.sm.add_widget(self.screen_settings)
+        self.sm.add_widget(self.screen_developer)
+
+        self.sm.current = "browser"
+        self.main_box.add_widget(self.sm)
+
+        # 3. Bottom Bar / Abas Rápidas
+        self.bottom_bar = BoxLayout(
+            orientation='horizontal',
+            size_hint_y=None,
+            height=50,
+            padding=[4, 4, 4, 4],
+            spacing=4
         )
-        self.layout.add_widget(self.status_label)
+        self._update_bottom_bar_canvas()
+        self.bottom_bar.bind(pos=self._update_bottom_bar_canvas, size=self._update_bottom_bar_canvas)
 
-        # Rodapé
-        rodape = Label(
-            text="By Joadson Rocha © 2025",
-            size_hint=(1, None),
-            height=30,
-            pos_hint={'center_x': 0.5, 'y': 0.02},
-            color=(0, 0, 0, 1))
-        self.layout.add_widget(rodape)
+        self.bottom_nav_buttons = {}
+        tabs = [
+            ("browser", "🌐", "Navegar"),
+            ("single_download", "📥", "Único"),
+            ("playlist", "📑", "Playlist"),
+            ("audio", "🎵", "Áudio"),
+            ("history", "📜", "Histórico")
+        ]
 
-        # Botão para alternar tema
-        self.tema_button = MDRaisedButton(
-            text='Tema Escuro',
-            size_hint=(None, None),
-            size=(100, 40),
-            pos_hint={'x': 0.02, 'top': 0.98},
-            md_bg_color=(0.2, 0.2, 0.2, 1),
-            theme_text_color="Custom",
-            text_color=(1, 1, 1, 1),
-        )
-        self.tema_button.bind(on_press=self.alternar_tema)
-        self.layout.add_widget(self.tema_button)
+        for screen_name, icon, label in tabs:
+            is_active = (screen_name == "browser")
+            bg = Theme.BLUE_ACTION if is_active else [0, 0, 0, 0]
+            fg = [1, 1, 1, 1] if is_active else Theme.get_subtext(self.is_dark)
 
-        # Menu de qualidade (usando KivyMD)
-        self.menu_qualidade = MDDropdownMenu(
-            caller=self.qualidade_img,
-            items=[
-                {"text": "Padrão", "on_release": lambda: self.selecionar_qualidade("Padrão")},
-                {"text": "1080p", "on_release": lambda: self.selecionar_qualidade("1080p")},
-                {"text": "720p", "on_release": lambda: self.selecionar_qualidade("720p")},
-                {"text": "480p", "on_release": lambda: self.selecionar_qualidade("480p")},
-                {"text": "360p", "on_release": lambda: self.selecionar_qualidade("360p")},
-                {"text": "Somente Áudio", "on_release": lambda: self.selecionar_qualidade("Somente Áudio")},
-            ],
-            width_mult=4,
-        )
-
-        print("Interface montada.")
-        return self.layout
-
-    def alternar_tema(self, instance):
-        """Alterna entre tema claro e escuro."""
-        self.dark_mode = not self.dark_mode
-        if self.dark_mode:
-            self.theme_cls.theme_style = "Dark"  # Tema escuro
-            self.tema_button.text = 'Tema Claro'
-        else:
-            self.theme_cls.theme_style = "Light"  # Tema claro
-            self.tema_button.text = 'Tema Escuro'
-
-    def validar_url(self, url):
-        padrao = r'^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+'
-        return re.match(padrao, url) is not None
-
-    def mostrar_opcoes_qualidade(self, instance, touch):
-        """Abre o menu de qualidade ao clicar na imagem."""
-        if instance.collide_point(*touch.pos):  # Verifica se o clique foi na imagem
-            if not self.menu_qualidade.parent:  # Verifica se o menu já está aberto
-                self.menu_qualidade.open()
-
-    def selecionar_qualidade(self, qualidade):
-        self.qualidade_selecionada = qualidade.lower()
-        print(f"Qualidade selecionada: {self.qualidade_selecionada}")
-        self.menu_qualidade.dismiss()  # Fecha o menu após a seleção
-
-    def iniciar_download(self, instance):
-        print("Iniciando download...")
-        url = self.url_input.text
-        qualidade = getattr(self, 'qualidade_selecionada', 'padrão')
-
-        if not url or not self.validar_url(url):
-            self.mostrar_popup("Erro", "Por favor, insira uma URL válida do YouTube.")
-            return
-
-        self.download_button.disabled = True
-        self.download_button.text = "Baixando..."
-        self.download_button.md_bg_color = (0.5, 0.5, 0.5, 1)
-
-        # Inicia o download em uma thread separada
-        threading.Thread(target=self.executar_download, args=(url, qualidade), daemon=True).start()
-
-    def executar_download(self, url, qualidade):
-        print("Iniciando o download...")
-        try:
-            local_salvar = "/storage/emulated/0/Download/" if platform == 'android' else os.path.expanduser("~/Downloads")
-            print(f"Salvando em: {local_salvar}")
-
-            qualidade_map = {
-                "padrão": "best",
-                "1080p": "bestvideo[height<=1080]+bestaudio/best[height<=1080]",
-                "720p": "bestvideo[height<=720]+bestaudio/best[height<=720]",
-                "480p": "bestvideo[height<=480]+bestaudio/best[height<=480]",
-                "360p": "bestvideo[height<=360]+bestaudio/best[height<=360]",
-                "somente áudio": "bestaudio"
-            }
-            formato = qualidade_map.get(qualidade, "best")
-
-            ydl_opts = {
-                'format': formato,
-                'outtmpl': os.path.join(local_salvar, '%(title)s.%(ext)s'),
-                'progress_hooks': [self.atualizar_progresso],
-                'noplaylist': True,
-            }
-
-            with YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                self.mostrar_popup("Sucesso", f"Download concluído: {info['title']}")
-                # Notificação no Android
-                if platform == 'android':
-                    notification.notify(
-                        title="Download Concluído",
-                        message=f"{info['title']} foi baixado com sucesso!",
-                        app_name="MultDownloader"
-                    )
-        except Exception as e:
-            Clock.schedule_once(lambda dt: self.mostrar_popup("Erro", f"Ocorreu um erro: {str(e)}"))
-        finally:
-            Clock.schedule_once(lambda dt: self.reabilitar_botao_download())
-
-    def atualizar_progresso(self, d):
-        if d['status'] == 'downloading':
-            # Remove caracteres de escape ANSI e converte para float
-            percent_str = re.sub(r'\x1b\[[0-9;]*m', '', d['_percent_str']).strip('%')
-            percent = float(percent_str)
-            Clock.schedule_once(lambda dt: self.atualizar_ui_progresso(percent))
-            # Notificação de progresso no Android
-            if platform == 'android':
-                notification.notify(
-                    title="Download em Progresso",
-                    message=f"Progresso: {int(percent)}%",
-                    app_name="MultDownloader"
-                )
-
-    def atualizar_ui_progresso(self, percent):
-        self.progress_bar.value = percent
-        self.status_label.text = f"Baixando... {int(percent)}%"
-
-    def reabilitar_botao_download(self):
-        self.download_button.disabled = False
-        self.download_button.text = "Baixar"
-        self.download_button.md_bg_color = (0.2, 0.6, 0.2, 1)
-        self.progress_bar.value = 0
-        self.status_label.text = ""
-
-    def mostrar_popup(self, titulo, mensagem):
-        def _mostrar_popup(dt):
-            # Define a cor de fundo do Popup com base no tema
-            background_color = self.theme_cls.primary_color if self.dark_mode else (1, 1, 1, 1)
-            
-            # Cria o Popup
-            popup = Popup(
-                title=titulo,
-                content=Label(text=mensagem, color=(0, 0, 0, 1)),
-                size_hint=(0.8, 0.4),
-                background_color=background_color,  # Usando background_color em vez de background
+            btn = CustomButton(
+                text=f"{icon}\n{label}",
+                font_size="10sp",
+                bg_color=bg,
+                text_color=fg,
+                radius=[8, 8, 8, 8],
+                size_hint_x=0.2
             )
-            popup.open()
-        Clock.schedule_once(_mostrar_popup)
+            btn.bind(on_release=lambda inst, s=screen_name: self.switch_screen(s))
+            self.bottom_nav_buttons[screen_name] = btn
+            self.bottom_bar.add_widget(btn)
+
+        self.main_box.add_widget(self.bottom_bar)
+        self.root_layout.add_widget(self.main_box)
+
+        # 4. Navigation Drawer Overlay (Menu Lateral)
+        self._build_drawer()
+
+        return self.root_layout
+
+    def _update_top_bar_canvas(self, *args):
+        self.top_bar.canvas.before.clear()
+        with self.top_bar.canvas.before:
+            Color(*Theme.get_card(self.is_dark))
+            Rectangle(pos=self.top_bar.pos, size=self.top_bar.size)
+            Color(*Theme.get_border(self.is_dark))
+            Rectangle(pos=(self.top_bar.x, self.top_bar.y), size=(self.top_bar.width, 1))
+
+    def _update_bottom_bar_canvas(self, *args):
+        self.bottom_bar.canvas.before.clear()
+        with self.bottom_bar.canvas.before:
+            Color(*Theme.get_card(self.is_dark))
+            Rectangle(pos=self.bottom_bar.pos, size=self.bottom_bar.size)
+            Color(*Theme.get_border(self.is_dark))
+            Rectangle(pos=(self.bottom_bar.x, self.bottom_bar.top - 1), size=(self.bottom_bar.width, 1))
+
+    def _build_drawer(self):
+        """Constrói o menu lateral com todas as opções da imagem do Desktop."""
+        self.drawer_overlay = FloatLayout(size_hint=(1, 1), pos_hint={'x': -1, 'y': 0})
+        
+        # Fundo semi-transparente para fechar ao tocar fora
+        self.drawer_dim = Button(
+            size_hint=(1, 1),
+            background_color=(0, 0, 0, 0.4),
+            background_normal=''
+        )
+        self.drawer_dim.bind(on_release=lambda x: self.toggle_drawer(False))
+        self.drawer_overlay.add_widget(self.drawer_dim)
+
+        # Painel do Menu Lateral
+        self.drawer_panel = RoundedCard(
+            bg_color=Theme.get_card(self.is_dark),
+            border_color=Theme.get_border(self.is_dark),
+            orientation='vertical',
+            size_hint=(0.75, 1),
+            pos_hint={'x': 0, 'y': 0},
+            padding=[12, 16, 12, 16],
+            spacing=8,
+            radius=[0, 16, 16, 0]
+        )
+
+        # Cabeçalho do Drawer
+        drawer_header = BoxLayout(orientation='horizontal', spacing=10, size_hint_y=None, height=50)
+        logo_path = "logo.png" if os.path.exists("logo.png") else "logo.ico"
+        drawer_logo = Image(source=logo_path, size_hint=(None, 1), width=40)
+        drawer_header.add_widget(drawer_logo)
+
+        drawer_title = Label(
+            text="[b][color=2196F3]Mult[/color][color=FA5858]Download[/color][/b]\n[size=11sp]Versão 4.2.0 Mobile[/size]",
+            markup=True,
+            font_size="15sp",
+            halign='left',
+            valign='middle'
+        )
+        drawer_title.bind(size=lambda *x: setattr(drawer_title, 'text_size', (drawer_title.width, None)))
+        drawer_header.add_widget(drawer_title)
+        self.drawer_panel.add_widget(drawer_header)
+
+        # Linha divisória
+        div = BoxLayout(size_hint_y=None, height=1)
+        with div.canvas:
+            Color(*Theme.get_border(self.is_dark))
+            Rectangle(pos=div.pos, size=div.size)
+        self.drawer_panel.add_widget(div)
+
+        # Itens do Menu (Idênticos ao Desktop)
+        menu_items = [
+            ("browser", "🌐  Navegador YouTube"),
+            ("single_download", "📥  Download Único"),
+            ("playlist", "📑  Baixar Playlist"),
+            ("audio", "🎵  Baixar Áudio"),
+            ("history", "📜  Histórico"),
+            ("settings", "⚙️  Configurações"),
+            ("developer", "👨‍💻  Desenvolvedor")
+        ]
+
+        self.drawer_buttons = {}
+        for screen_name, title in menu_items:
+            is_active = (screen_name == "browser")
+            bg = Theme.RED_ACTION if is_active else [0, 0, 0, 0]
+            fg = [1, 1, 1, 1] if is_active else Theme.get_text(self.is_dark)
+
+            btn = CustomButton(
+                text=title,
+                font_size="13sp",
+                bg_color=bg,
+                text_color=fg,
+                size_hint_y=None,
+                height=44,
+                radius=[8, 8, 8, 8]
+            )
+            btn.bind(on_release=lambda inst, s=screen_name: self._on_drawer_item_click(s))
+            self.drawer_buttons[screen_name] = btn
+            self.drawer_panel.add_widget(btn)
+
+        # Espaçador
+        self.drawer_panel.add_widget(Label())
+
+        # Rodapé do Drawer
+        drawer_footer = Label(
+            text="By Joadson Rocha © 2026",
+            font_size="11sp",
+            color=Theme.get_subtext(self.is_dark),
+            size_hint_y=None,
+            height=24,
+            halign='center'
+        )
+        self.drawer_panel.add_widget(drawer_footer)
+
+        self.drawer_overlay.add_widget(self.drawer_panel)
+        self.root_layout.add_widget(self.drawer_overlay)
+
+    def toggle_drawer(self, force_state=None):
+        if force_state is not None:
+            self.drawer_open = force_state
+        else:
+            self.drawer_open = not self.drawer_open
+
+        if self.drawer_open:
+            self.drawer_overlay.pos_hint = {'x': 0, 'y': 0}
+        else:
+            self.drawer_overlay.pos_hint = {'x': -1, 'y': 0}
+
+    def _on_drawer_item_click(self, screen_name):
+        self.toggle_drawer(False)
+        self.switch_screen(screen_name)
+
+    def switch_screen(self, screen_name):
+        self.sm.current = screen_name
+        
+        # Atualiza botões da barra inferior
+        for name, btn in self.bottom_nav_buttons.items():
+            is_active = (name == screen_name)
+            bg = Theme.BLUE_ACTION if is_active else [0, 0, 0, 0]
+            fg = [1, 1, 1, 1] if is_active else Theme.get_subtext(self.is_dark)
+            btn.set_color(bg, fg)
+
+        # Atualiza botões do Drawer
+        for name, btn in self.drawer_buttons.items():
+            is_active = (name == screen_name)
+            bg = Theme.RED_ACTION if is_active else [0, 0, 0, 0]
+            fg = [1, 1, 1, 1] if is_active else Theme.get_text(self.is_dark)
+            btn.set_color(bg, fg)
+
+    def switch_to_single_download(self, url, auto_fetch=True, is_audio=False):
+        """Transfere uma URL do Navegador diretamente para a tela de Download."""
+        if is_audio:
+            self.switch_screen("audio")
+            self.screen_audio.url_input.text = url
+            if auto_fetch:
+                self.screen_audio.fetch_audio_info()
+        else:
+            self.switch_screen("single_download")
+            self.screen_single.url_input.text = url
+            if auto_fetch:
+                self.screen_single.fetch_video_info(url)
+
+    def toggle_theme(self, is_dark_val=None):
+        if is_dark_val is not None:
+            self.is_dark = is_dark_val
+        else:
+            self.is_dark = not self.is_dark
+
+        Window.clearcolor = Theme.get_bg(self.is_dark)
+        self.btn_theme.text = "☀️" if not self.is_dark else "🌙"
+        self.btn_theme.set_color(Theme.get_input_bg(self.is_dark), Theme.get_text(self.is_dark))
+        self.btn_menu.set_color(Theme.get_input_bg(self.is_dark), Theme.get_text(self.is_dark))
+
+        self._update_top_bar_canvas()
+        self._update_bottom_bar_canvas()
+
+        # Atualiza telas
+        self.screen_browser.update_theme(self.is_dark)
+        self.screen_single.update_theme(self.is_dark)
+        self.screen_playlist.update_theme(self.is_dark)
+        self.screen_audio.update_theme(self.is_dark)
+        self.screen_history.update_theme(self.is_dark)
+        self.screen_settings.update_theme(self.is_dark)
+        self.screen_developer.update_theme(self.is_dark)
+
+        # Atualiza drawer
+        self.drawer_panel.set_bg_color(Theme.get_card(self.is_dark), Theme.get_border(self.is_dark))
+        self.switch_screen(self.sm.current)
+
+    def show_message(self, title, message):
+        """Exibe um diálogo modal moderno e arredondado compatível com o tema."""
+        def _show(dt):
+            modal = ModalView(
+                size_hint=(0.85, None),
+                height=220,
+                auto_dismiss=True,
+                background_color=(0, 0, 0, 0.5)
+            )
+            card = RoundedCard(
+                bg_color=Theme.get_card(self.is_dark),
+                border_color=Theme.get_border(self.is_dark),
+                orientation='vertical',
+                padding=16,
+                spacing=10,
+                radius=[16, 16, 16, 16]
+            )
+            
+            title_lbl = Label(
+                text=f"[b]{title}[/b]",
+                markup=True,
+                font_size="16sp",
+                color=Theme.get_text(self.is_dark),
+                size_hint_y=None,
+                height=26,
+                halign='center'
+            )
+            card.add_widget(title_lbl)
+
+            msg_lbl = Label(
+                text=message,
+                font_size="13sp",
+                color=Theme.get_subtext(self.is_dark),
+                halign='center',
+                valign='middle'
+            )
+            msg_lbl.bind(size=lambda *x: setattr(msg_lbl, 'text_size', (msg_lbl.width - 20, None)))
+            card.add_widget(msg_lbl)
+
+            btn_ok = CustomButton(
+                text="OK",
+                font_size="13sp",
+                bg_color=Theme.BLUE_ACTION,
+                size_hint_y=None,
+                height=40,
+                radius=[8, 8, 8, 8]
+            )
+            btn_ok.bind(on_release=lambda x: modal.dismiss())
+            card.add_widget(btn_ok)
+
+            modal.add_widget(card)
+            modal.open()
+
+        Clock.schedule_once(_show)
 
 if __name__ == '__main__':
-    print("Executando o aplicativo...")
-    MultDownloaderApp().run()
+    MultDownloadApp().run()

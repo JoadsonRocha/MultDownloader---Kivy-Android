@@ -1,0 +1,3 @@
+"""
+MultDownloader - Core Module
+"""
