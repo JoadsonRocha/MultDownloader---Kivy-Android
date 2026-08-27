@@ -252,3 +252,4 @@ class AudioScreen(Screen):
         self.bitrate_title.color = Theme.get_text(is_dark)
         self.select_bitrate(self.selected_bitrate)
         self.progress_panel.update_theme(is_dark)
+

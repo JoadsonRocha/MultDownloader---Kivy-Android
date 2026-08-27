@@ -48,3 +48,4 @@ class Theme:
     @classmethod
     def get_input_bg(cls, is_dark):
         return cls.DARK_INPUT_BG if is_dark else cls.LIGHT_INPUT_BG
+

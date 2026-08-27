@@ -64,3 +64,4 @@ class HistoryManager:
         """Limpa todo o histórico."""
         self.history = []
         self._save()
+

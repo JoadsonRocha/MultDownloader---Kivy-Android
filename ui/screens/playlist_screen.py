@@ -277,3 +277,4 @@ class PlaylistScreen(Screen):
         self.playlist_details.color = Theme.get_subtext(is_dark)
         self.set_mode(self.is_audio_mode)
         self.progress_panel.update_theme(is_dark)
+

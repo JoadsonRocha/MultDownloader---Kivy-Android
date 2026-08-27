@@ -188,3 +188,4 @@ class BrowserScreen(Screen):
         self.content_area.set_bg_color(Theme.get_card(is_dark), Theme.get_border(is_dark))
         self.info_title.color = Theme.get_text(is_dark)
         self.info_desc.color = Theme.get_subtext(is_dark)
+

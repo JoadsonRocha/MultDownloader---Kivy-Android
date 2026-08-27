@@ -189,3 +189,4 @@ class HistoryScreen(Screen):
     def update_theme(self, is_dark):
         self.header_label.color = Theme.get_text(is_dark)
         self.refresh_history()
+

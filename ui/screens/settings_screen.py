@@ -138,3 +138,4 @@ class SettingsScreen(Screen):
         self.notif_card.set_bg_color(Theme.get_card(is_dark), Theme.get_border(is_dark))
         self.notif_label.color = Theme.get_text(is_dark)
         self.theme_switch.active = is_dark
+

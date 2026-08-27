@@ -236,3 +236,4 @@ class ProgressPanel(RoundedCard):
         self.status_label.color = Theme.get_text(is_dark)
         self.speed_label.color = Theme.get_subtext(is_dark)
         self.eta_label.color = Theme.get_subtext(is_dark)
+

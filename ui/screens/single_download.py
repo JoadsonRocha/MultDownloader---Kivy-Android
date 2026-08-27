@@ -277,3 +277,4 @@ class SingleDownloadScreen(Screen):
         self.quality_title.color = Theme.get_text(is_dark)
         self.select_quality(self.selected_quality)
         self.progress_panel.update_theme(is_dark)
+

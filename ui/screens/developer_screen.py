@@ -108,3 +108,4 @@ class DeveloperScreen(Screen):
         self.dev_label.color = Theme.get_text(is_dark)
         self.features_label.color = Theme.get_subtext(is_dark)
         self.copyright_label.color = Theme.get_subtext(is_dark)
+

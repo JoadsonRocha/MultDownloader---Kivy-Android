@@ -278,3 +278,4 @@ class DownloaderEngine:
         thread = threading.Thread(target=_worker, daemon=True)
         thread.start()
         return thread
+
