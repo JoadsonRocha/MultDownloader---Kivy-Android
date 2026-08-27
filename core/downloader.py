@@ -38,7 +38,46 @@ class DownloaderEngine:
             return f"{count / 1_000_000:.1f}M"
         if count >= 1_000:
             return f"{count / 1_000:.1f}k"
-        return str(count)
+    def search_youtube(self, query="músicas em alta", max_results=8):
+        """Busca vídeos e músicas no YouTube e retorna uma lista formatada de resultados."""
+        if not query or not query.strip():
+            query = "músicas em alta brasil"
+            
+        search_query = query if query.startswith(('http://', 'https://')) else f"ytsearch{max_results}:{query}"
+        
+        ydl_opts = {
+            'quiet': True,
+            'skip_download': True,
+            'extract_flat': True,
+            'no_warnings': True,
+        }
+        with YoutubeDL(ydl_opts) as ydl:
+            res = ydl.extract_info(search_query, download=False)
+            entries = []
+            raw_entries = res.get('entries', []) if ('entries' in res) else [res]
+            for item in raw_entries:
+                if not item:
+                    continue
+                thumb = item.get('thumbnail')
+                if not thumb and 'thumbnails' in item and len(item['thumbnails']) > 0:
+                    thumb = item['thumbnails'][-1].get('url')
+                if not thumb and item.get('id'):
+                    thumb = f"https://i.ytimg.com/vi/{item.get('id')}/hqdefault.jpg"
+                
+                url = item.get('url')
+                if not url or not url.startswith('http'):
+                    url = f"https://www.youtube.com/watch?v={item.get('id')}"
+
+                entries.append({
+                    "id": item.get('id', ''),
+                    "title": item.get('title', 'Sem título'),
+                    "uploader": item.get('uploader', item.get('channel', 'YouTube')),
+                    "duration": self.format_duration(item.get('duration', 0)),
+                    "thumbnail": thumb or "",
+                    "url": url,
+                    "views": self.format_views(item.get('view_count', 0))
+                })
+            return entries
 
     def extract_info(self, url):
         """Extrai metadados da URL de forma segura."""
