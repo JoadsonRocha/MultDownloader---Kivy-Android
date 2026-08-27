@@ -65,7 +65,7 @@ class DeveloperScreen(Screen):
 
         # Divisor visual / Créditos
         self.dev_label = Label(
-            text="👨‍💻 Desenvolvido por:\n[b][color=2196F3]Joadson Rocha[/color][/b]",
+            text="Desenvolvido por:\n[b][color=2196F3]Joadson Rocha[/color][/b]",
             markup=True,
             font_size="15sp",
             color=Theme.get_text(self.app.is_dark),
@@ -77,7 +77,7 @@ class DeveloperScreen(Screen):
 
         # Detalhes de suporte
         self.features_label = Label(
-            text="• Suporte a YouTube, TikTok, Instagram, X/Twitter e mais\n• Extração direta de áudio MP3 em alta definição\n• Download de Playlists completas\n• Compatível com Android 10, 11, 12, 13 e 14+",
+            text="• Suporte a YouTube, TikTok, Instagram, X/Twitter e mais\n• Extração direta de áudio MP3 em alta definição\n• Download de Playlists completas\n• Compatível com Android 9, 10, 11, 12, 13 e 14+",
             font_size="12sp",
             color=Theme.get_subtext(self.app.is_dark),
             size_hint_y=None,
@@ -108,4 +108,3 @@ class DeveloperScreen(Screen):
         self.dev_label.color = Theme.get_text(is_dark)
         self.features_label.color = Theme.get_subtext(is_dark)
         self.copyright_label.color = Theme.get_subtext(is_dark)
-

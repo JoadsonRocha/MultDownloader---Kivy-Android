@@ -109,7 +109,7 @@ class VideoPreviewCard(RoundedCard):
         self.meta_box.add_widget(self.author_label)
 
         self.duration_label = Label(
-            text="⏱ 00:00",
+            text="Tempo: 00:00",
             font_size="12sp",
             color=Theme.get_subtext(is_dark),
             size_hint_x=0.25
@@ -117,7 +117,7 @@ class VideoPreviewCard(RoundedCard):
         self.meta_box.add_widget(self.duration_label)
 
         self.views_label = Label(
-            text="👁 0",
+            text="Views: 0",
             font_size="12sp",
             color=Theme.get_subtext(is_dark),
             size_hint_x=0.25
@@ -132,8 +132,8 @@ class VideoPreviewCard(RoundedCard):
         if thumbnail_url:
             self.thumbnail.source = thumbnail_url
         self.author_label.text = uploader
-        self.duration_label.text = f"⏱ {duration}"
-        self.views_label.text = f"👁 {views}"
+        self.duration_label.text = f"Tempo: {duration}"
+        self.views_label.text = f"Views: {views}"
         self.opacity = 1
 
     def update_theme(self, is_dark):
@@ -204,8 +204,8 @@ class ProgressPanel(RoundedCard):
             text="Cancelar",
             font_size="11sp",
             bg_color=Theme.RED_ACTION,
-            size_hint=(None, None),
-            size=(70, 24),
+            size_hint=(None, 1),
+            width=75,
             radius=[6, 6, 6, 6]
         )
         if on_cancel:
@@ -218,9 +218,9 @@ class ProgressPanel(RoundedCard):
         self.bar.value = percent
         self.percent_label.text = f"{int(percent)}%"
         if speed_str:
-            self.speed_label.text = f"⚡ {speed_str}"
+            self.speed_label.text = f"Vel: {speed_str}"
         if eta_str:
-            self.eta_label.text = f"⏱ {eta_str}"
+            self.eta_label.text = f"ETA: {eta_str}"
         if status_text:
             self.status_label.text = status_text
 
@@ -236,4 +236,3 @@ class ProgressPanel(RoundedCard):
         self.status_label.color = Theme.get_text(is_dark)
         self.speed_label.color = Theme.get_subtext(is_dark)
         self.eta_label.color = Theme.get_subtext(is_dark)
-

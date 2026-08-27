@@ -25,7 +25,7 @@ class SettingsScreen(Screen):
 
         # Título
         self.title_label = Label(
-            text="⚙️ Configurações",
+            text="Configurações",
             font_size="18sp",
             bold=True,
             color=Theme.get_text(self.app.is_dark),
@@ -138,4 +138,3 @@ class SettingsScreen(Screen):
         self.notif_card.set_bg_color(Theme.get_card(is_dark), Theme.get_border(is_dark))
         self.notif_label.color = Theme.get_text(is_dark)
         self.theme_switch.active = is_dark
-

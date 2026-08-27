@@ -28,48 +28,36 @@ class BrowserScreen(Screen):
 
         # Botão Voltar
         self.btn_back = CustomButton(
-            text="←",
-            font_size="16sp",
+            text="<",
+            font_size="15sp",
             bg_color=Theme.get_input_bg(self.app.is_dark),
             text_color=Theme.get_text(self.app.is_dark),
             size_hint=(None, 1),
-            width=36,
+            width=32,
             radius=[6, 6, 6, 6]
         )
         nav_card.add_widget(self.btn_back)
 
         # Botão Avançar
         self.btn_forward = CustomButton(
-            text="→",
-            font_size="16sp",
+            text=">",
+            font_size="15sp",
             bg_color=Theme.get_input_bg(self.app.is_dark),
             text_color=Theme.get_text(self.app.is_dark),
             size_hint=(None, 1),
-            width=36,
+            width=32,
             radius=[6, 6, 6, 6]
         )
         nav_card.add_widget(self.btn_forward)
 
-        # Botão Recarregar
-        self.btn_reload = CustomButton(
-            text="↻",
-            font_size="16sp",
-            bg_color=Theme.get_input_bg(self.app.is_dark),
-            text_color=Theme.get_text(self.app.is_dark),
-            size_hint=(None, 1),
-            width=36,
-            radius=[6, 6, 6, 6]
-        )
-        nav_card.add_widget(self.btn_reload)
-
         # Botão Home
         self.btn_home = CustomButton(
-            text="🏠",
-            font_size="14sp",
+            text="Home",
+            font_size="11sp",
             bg_color=Theme.get_input_bg(self.app.is_dark),
             text_color=Theme.get_text(self.app.is_dark),
             size_hint=(None, 1),
-            width=36,
+            width=48,
             radius=[6, 6, 6, 6]
         )
         self.btn_home.bind(on_release=lambda x: self.navigate_to("https://m.youtube.com"))
@@ -79,7 +67,7 @@ class BrowserScreen(Screen):
         self.url_input = TextInput(
             text="https://m.youtube.com",
             multiline=False,
-            font_size="13sp",
+            font_size="12sp",
             background_normal='',
             background_color=(0, 0, 0, 0),
             foreground_color=Theme.get_text(self.app.is_dark),
@@ -106,7 +94,7 @@ class BrowserScreen(Screen):
         action_bar = BoxLayout(orientation='horizontal', spacing=10, size_hint_y=None, height=44)
         
         self.btn_download_video = CustomButton(
-            text="🔴 Baixar Vídeo",
+            text="Baixar Vídeo",
             font_size="13sp",
             bg_color=Theme.RED_ACTION,
             text_color=[1, 1, 1, 1],
@@ -117,7 +105,7 @@ class BrowserScreen(Screen):
         action_bar.add_widget(self.btn_download_video)
 
         self.btn_download_audio = CustomButton(
-            text="🔵 Baixar Áudio",
+            text="Baixar Áudio",
             font_size="13sp",
             bg_color=Theme.BLUE_ACTION,
             text_color=[1, 1, 1, 1],
@@ -129,7 +117,7 @@ class BrowserScreen(Screen):
 
         self.layout.add_widget(action_bar)
 
-        # 3. Área Central (Exibição Web / Informações)
+        # 3. Área Central
         self.content_area = RoundedCard(
             bg_color=Theme.get_card(self.app.is_dark),
             border_color=Theme.get_border(self.app.is_dark),
@@ -139,8 +127,8 @@ class BrowserScreen(Screen):
         )
         
         self.info_title = Label(
-            text="🌐 Navegador MultDownload",
-            font_size="18sp",
+            text="Navegador MultDownload",
+            font_size="17sp",
             bold=True,
             color=Theme.get_text(self.app.is_dark),
             size_hint_y=None,
@@ -149,7 +137,7 @@ class BrowserScreen(Screen):
         self.content_area.add_widget(self.info_title)
 
         self.info_desc = Label(
-            text="Navegue no YouTube, TikTok, Instagram ou qualquer site de vídeo.\nQuando encontrar o vídeo desejado, basta clicar nos botões acima:\n\n• [b]🔴 Baixar Vídeo[/b] para baixar em MP4\n• [b]🔵 Baixar Áudio[/b] para extrair em MP3\n\nOu use a aba [b]Download Único[/b] para colar o link diretamente.",
+            text="Navegue no YouTube, TikTok, Instagram ou qualquer site de vídeo.\nQuando encontrar o vídeo desejado, basta clicar nos botões acima:\n\n• [b]Baixar Vídeo[/b] para baixar em MP4\n• [b]Baixar Áudio[/b] para extrair em MP3\n\nOu acesse a aba [b]Download Único[/b] para colar o link diretamente.",
             markup=True,
             font_size="13sp",
             color=Theme.get_subtext(self.app.is_dark),
@@ -182,10 +170,8 @@ class BrowserScreen(Screen):
         self.nav_card.set_bg_color(Theme.get_card(is_dark), Theme.get_border(is_dark))
         self.btn_back.set_color(Theme.get_input_bg(is_dark), Theme.get_text(is_dark))
         self.btn_forward.set_color(Theme.get_input_bg(is_dark), Theme.get_text(is_dark))
-        self.btn_reload.set_color(Theme.get_input_bg(is_dark), Theme.get_text(is_dark))
         self.btn_home.set_color(Theme.get_input_bg(is_dark), Theme.get_text(is_dark))
         self.url_input.foreground_color = Theme.get_text(is_dark)
         self.content_area.set_bg_color(Theme.get_card(is_dark), Theme.get_border(is_dark))
         self.info_title.color = Theme.get_text(is_dark)
         self.info_desc.color = Theme.get_subtext(is_dark)
-

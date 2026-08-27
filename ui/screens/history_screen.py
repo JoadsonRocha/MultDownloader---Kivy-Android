@@ -3,7 +3,6 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.label import Label
-from kivy.uix.image import AsyncImage
 from ui.theme import Theme
 from ui.components import CustomButton, RoundedCard
 from core.platform_helper import PlatformHelper
@@ -21,17 +20,19 @@ class HistoryItemCard(RoundedCard):
         self.item_id = item.get("id")
         self.file_path = item.get("file_path", "")
 
-        # Linha Superior: Ícone/Tipo + Título + Data
+        # Linha Superior: Tipo + Título + Data
         top_box = BoxLayout(orientation='horizontal', spacing=8, size_hint_y=None, height=45)
         
         is_audio = item.get("item_type") == "audio"
-        icon_label = Label(
-            text="🎵" if is_audio else "🎬",
-            font_size="22sp",
+        tag_label = Label(
+            text="[ÁUDIO]" if is_audio else "[VÍDEO]",
+            font_size="10sp",
+            bold=True,
+            color=Theme.BLUE_ACTION if is_audio else Theme.RED_ACTION,
             size_hint=(None, 1),
-            width=30
+            width=50
         )
-        top_box.add_widget(icon_label)
+        top_box.add_widget(tag_label)
 
         info_box = BoxLayout(orientation='vertical', spacing=2)
         title_lbl = Label(
@@ -69,7 +70,7 @@ class HistoryItemCard(RoundedCard):
 
         # Botão Abrir
         btn_open = CustomButton(
-            text="▶ Abrir",
+            text="Abrir",
             font_size="11sp",
             bg_color=Theme.GREEN_SUCCESS,
             size_hint_x=0.4,
@@ -80,7 +81,7 @@ class HistoryItemCard(RoundedCard):
 
         # Botão Compartilhar
         btn_share = CustomButton(
-            text="📤 Compartilhar",
+            text="Compartilhar",
             font_size="11sp",
             bg_color=Theme.BLUE_ACTION,
             size_hint_x=0.4,
@@ -91,11 +92,10 @@ class HistoryItemCard(RoundedCard):
 
         # Botão Excluir
         btn_del = CustomButton(
-            text="🗑",
-            font_size="12sp",
+            text="Excluir",
+            font_size="11sp",
             bg_color=Theme.RED_ACTION,
-            size_hint=(None, 1),
-            width=36,
+            size_hint_x=0.2,
             radius=[6, 6, 6, 6]
         )
         if on_delete:
@@ -115,7 +115,7 @@ class HistoryScreen(Screen):
         # Top Bar do Histórico
         top_row = BoxLayout(orientation='horizontal', size_hint_y=None, height=40)
         self.header_label = Label(
-            text="📜 Histórico de Downloads",
+            text="Histórico de Downloads",
             font_size="16sp",
             bold=True,
             color=Theme.get_text(self.app.is_dark),
@@ -189,4 +189,3 @@ class HistoryScreen(Screen):
     def update_theme(self, is_dark):
         self.header_label.color = Theme.get_text(is_dark)
         self.refresh_history()
-

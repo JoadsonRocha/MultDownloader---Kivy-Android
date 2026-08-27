@@ -50,12 +50,12 @@ class PlaylistScreen(Screen):
 
         # Botão Colar
         self.btn_paste = CustomButton(
-            text="📋 Colar",
-            font_size="11sp",
+            text="Colar",
+            font_size="12sp",
             bg_color=Theme.get_input_bg(self.app.is_dark),
             text_color=Theme.get_text(self.app.is_dark),
             size_hint=(None, 1),
-            width=65,
+            width=58,
             radius=[6, 6, 6, 6]
         )
         self.btn_paste.bind(on_release=self.paste_from_clipboard)
@@ -63,12 +63,12 @@ class PlaylistScreen(Screen):
 
         # Botão Buscar Playlist
         self.btn_fetch = CustomButton(
-            text="🔍 Buscar",
-            font_size="11sp",
+            text="Buscar",
+            font_size="12sp",
             bg_color=Theme.BLUE_ACTION,
             text_color=[1, 1, 1, 1],
             size_hint=(None, 1),
-            width=65,
+            width=58,
             radius=[6, 6, 6, 6]
         )
         self.btn_fetch.bind(on_release=lambda x: self.fetch_playlist())
@@ -87,7 +87,7 @@ class PlaylistScreen(Screen):
             height=100
         )
         self.playlist_title = Label(
-            text="📑 Nenhuma playlist carregada",
+            text="Nenhuma playlist carregada",
             font_size="15sp",
             bold=True,
             color=Theme.get_text(self.app.is_dark),
@@ -114,7 +114,7 @@ class PlaylistScreen(Screen):
         # 3. Tipo de Download: Vídeo ou Áudio
         mode_box = BoxLayout(orientation='horizontal', spacing=10, size_hint_y=None, height=40)
         self.btn_mode_video = CustomButton(
-            text="🎬 Baixar como Vídeo (MP4)",
+            text="Baixar como Vídeo (MP4)",
             font_size="12sp",
             bg_color=Theme.RED_ACTION,
             text_color=[1, 1, 1, 1],
@@ -125,7 +125,7 @@ class PlaylistScreen(Screen):
         mode_box.add_widget(self.btn_mode_video)
 
         self.btn_mode_audio = CustomButton(
-            text="🎵 Baixar como Áudio (MP3)",
+            text="Baixar como Áudio (MP3)",
             font_size="12sp",
             bg_color=Theme.get_input_bg(self.app.is_dark),
             text_color=Theme.get_text(self.app.is_dark),
@@ -139,7 +139,7 @@ class PlaylistScreen(Screen):
 
         # 4. Botão Baixar Playlist Completa
         self.btn_download_all = CustomButton(
-            text="⬇️ BAIXAR PLAYLIST COMPLETA",
+            text="BAIXAR PLAYLIST COMPLETA",
             font_size="14sp",
             bg_color=Theme.GREEN_SUCCESS,
             text_color=[1, 1, 1, 1],
@@ -181,7 +181,7 @@ class PlaylistScreen(Screen):
             self.app.show_message("Aviso", "Insira a URL da playlist.")
             return
 
-        self.btn_fetch.text = "⌛..."
+        self.btn_fetch.text = "..."
         self.progress_panel.set_progress(0, status_text="Carregando playlist...")
 
         def _fetch():
@@ -194,15 +194,15 @@ class PlaylistScreen(Screen):
         threading.Thread(target=_fetch, daemon=True).start()
 
     def _on_playlist_fetched(self, info):
-        self.btn_fetch.text = "🔍 Buscar"
+        self.btn_fetch.text = "Buscar"
         self.playlist_info = info
         count = info.get("playlist_count", 0) or len(info.get("entries", []))
-        self.playlist_title.text = f"📑 {info.get('title', 'Playlist')}"
+        self.playlist_title.text = f"{info.get('title', 'Playlist')}"
         self.playlist_details.text = f"Total de vídeos: {count} • Canal: {info.get('uploader', 'Vários')}"
         self.progress_panel.set_progress(0, status_text="Playlist carregada! Clique em Baixar.")
 
     def _on_fetch_error(self, err):
-        self.btn_fetch.text = "🔍 Buscar"
+        self.btn_fetch.text = "Buscar"
         self.progress_panel.set_progress(0, status_text="Erro ao carregar.")
         self.app.show_message("Erro", f"Falha ao carregar playlist:\n{err}")
 
@@ -255,12 +255,12 @@ class PlaylistScreen(Screen):
 
     def _on_playlist_success(self, completed, total):
         self.btn_download_all.disabled = False
-        self.progress_panel.set_progress(100, status_text=f"✅ {completed} de {total} itens baixados!")
-        self.app.show_message("Sucesso! 🎉", f"Playlist finalizada!\n{completed} de {total} itens foram salvos com sucesso.")
+        self.progress_panel.set_progress(100, status_text=f"{completed} de {total} itens baixados!")
+        self.app.show_message("Sucesso", f"Playlist finalizada!\n{completed} de {total} itens foram salvos com sucesso.")
 
     def _on_playlist_failed(self, err):
         self.btn_download_all.disabled = False
-        self.progress_panel.set_progress(0, status_text="⚠️ Interrompido")
+        self.progress_panel.set_progress(0, status_text="Interrompido")
         self.app.show_message("Aviso", f"Resultado: {err}")
 
     def cancel_download(self):
@@ -277,4 +277,3 @@ class PlaylistScreen(Screen):
         self.playlist_details.color = Theme.get_subtext(is_dark)
         self.set_mode(self.is_audio_mode)
         self.progress_panel.update_theme(is_dark)
-

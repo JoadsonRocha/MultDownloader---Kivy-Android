@@ -1,7 +1,7 @@
 import os
 import sys
 
-from kivy.app import App
+from kivymd.app import MDApp
 from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
@@ -12,6 +12,11 @@ from kivy.uix.image import Image
 from kivy.uix.modalview import ModalView
 from kivy.clock import Clock
 from kivy.graphics import Color, Rectangle, RoundedRectangle
+from kivy.utils import platform
+
+# Define o tamanho padrão da janela no Desktop para simular um celular perfeitamente
+if platform != 'android':
+    Window.size = (420, 760)
 
 from core.platform_helper import PlatformHelper
 from core.downloader import DownloaderEngine
@@ -26,7 +31,7 @@ from ui.screens.history_screen import HistoryScreen
 from ui.screens.settings_screen import SettingsScreen
 from ui.screens.developer_screen import DeveloperScreen
 
-class MultDownloadApp(App):
+class MultDownloadApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.title = "MultDownload 4.2.0"
@@ -64,14 +69,14 @@ class MultDownloadApp(App):
         self._update_top_bar_canvas()
         self.top_bar.bind(pos=self._update_top_bar_canvas, size=self._update_top_bar_canvas)
 
-        # Botão Menu Hambúrguer (☰)
+        # Botão Menu Hambúrguer (≡)
         self.btn_menu = CustomButton(
-            text="☰",
-            font_size="20sp",
+            text="Menu",
+            font_size="12sp",
             bg_color=Theme.get_input_bg(self.is_dark),
             text_color=Theme.get_text(self.is_dark),
             size_hint=(None, 1),
-            width=42,
+            width=54,
             radius=[8, 8, 8, 8]
         )
         self.btn_menu.bind(on_release=lambda x: self.toggle_drawer())
@@ -89,24 +94,24 @@ class MultDownloadApp(App):
 
         # Título do App
         self.title_label = Label(
-            text="[b][color=2196F3]Mult[/color][color=FA5858]Download[/color][/b] [size=12sp]4.2.0[/size]",
+            text="[b][color=2196F3]Mult[/color][color=FA5858]Download[/color][/b] [size=11sp]4.2.0[/size]",
             markup=True,
-            font_size="16sp",
+            font_size="15sp",
             halign='left',
             valign='middle',
-            size_hint_x=0.7
+            size_hint_x=0.6
         )
         self.title_label.bind(size=lambda *x: setattr(self.title_label, 'text_size', (self.title_label.width, None)))
         self.top_bar.add_widget(self.title_label)
 
-        # Botão Tema (Sol / Lua)
+        # Botão Tema (Claro / Escuro)
         self.btn_theme = CustomButton(
-            text="☀️" if not self.is_dark else "🌙",
-            font_size="16sp",
+            text="Tema" if not self.is_dark else "Escuro",
+            font_size="11sp",
             bg_color=Theme.get_input_bg(self.is_dark),
             text_color=Theme.get_text(self.is_dark),
             size_hint=(None, 1),
-            width=42,
+            width=56,
             radius=[8, 8, 8, 8]
         )
         self.btn_theme.bind(on_release=lambda x: self.toggle_theme())
@@ -149,21 +154,21 @@ class MultDownloadApp(App):
 
         self.bottom_nav_buttons = {}
         tabs = [
-            ("browser", "🌐", "Navegar"),
-            ("single_download", "📥", "Único"),
-            ("playlist", "📑", "Playlist"),
-            ("audio", "🎵", "Áudio"),
-            ("history", "📜", "Histórico")
+            ("browser", "Navegar"),
+            ("single_download", "Único"),
+            ("playlist", "Playlist"),
+            ("audio", "Áudio"),
+            ("history", "Histórico")
         ]
 
-        for screen_name, icon, label in tabs:
+        for screen_name, label in tabs:
             is_active = (screen_name == "browser")
             bg = Theme.BLUE_ACTION if is_active else [0, 0, 0, 0]
             fg = [1, 1, 1, 1] if is_active else Theme.get_subtext(self.is_dark)
 
             btn = CustomButton(
-                text=f"{icon}\n{label}",
-                font_size="10sp",
+                text=label,
+                font_size="11sp",
                 bg_color=bg,
                 text_color=fg,
                 radius=[8, 8, 8, 8],
@@ -215,7 +220,7 @@ class MultDownloadApp(App):
             bg_color=Theme.get_card(self.is_dark),
             border_color=Theme.get_border(self.is_dark),
             orientation='vertical',
-            size_hint=(0.75, 1),
+            size_hint=(0.80, 1),
             pos_hint={'x': 0, 'y': 0},
             padding=[12, 16, 12, 16],
             spacing=8,
@@ -248,13 +253,13 @@ class MultDownloadApp(App):
 
         # Itens do Menu (Idênticos ao Desktop)
         menu_items = [
-            ("browser", "🌐  Navegador YouTube"),
-            ("single_download", "📥  Download Único"),
-            ("playlist", "📑  Baixar Playlist"),
-            ("audio", "🎵  Baixar Áudio"),
-            ("history", "📜  Histórico"),
-            ("settings", "⚙️  Configurações"),
-            ("developer", "👨‍💻  Desenvolvedor")
+            ("browser", "Navegador YouTube"),
+            ("single_download", "Download Único"),
+            ("playlist", "Baixar Playlist"),
+            ("audio", "Baixar Áudio"),
+            ("history", "Histórico de Downloads"),
+            ("settings", "Configurações"),
+            ("developer", "Desenvolvedor")
         ]
 
         self.drawer_buttons = {}
@@ -345,7 +350,7 @@ class MultDownloadApp(App):
             self.is_dark = not self.is_dark
 
         Window.clearcolor = Theme.get_bg(self.is_dark)
-        self.btn_theme.text = "☀️" if not self.is_dark else "🌙"
+        self.btn_theme.text = "Tema" if not self.is_dark else "Escuro"
         self.btn_theme.set_color(Theme.get_input_bg(self.is_dark), Theme.get_text(self.is_dark))
         self.btn_menu.set_color(Theme.get_input_bg(self.is_dark), Theme.get_text(self.is_dark))
 

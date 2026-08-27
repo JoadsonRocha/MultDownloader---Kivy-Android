@@ -4,7 +4,6 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
-from kivy.uix.button import Button
 from kivy.clock import Clock
 from kivy.core.clipboard import Clipboard
 from ui.theme import Theme
@@ -40,7 +39,7 @@ class SingleDownloadScreen(Screen):
         self.input_card = input_card
 
         self.url_input = TextInput(
-            hint_text="Cole a URL do vídeo ou música aqui...",
+            hint_text="Cole o link do vídeo aqui...",
             multiline=False,
             font_size="13sp",
             background_normal='',
@@ -52,12 +51,12 @@ class SingleDownloadScreen(Screen):
 
         # Botão Colar
         self.btn_paste = CustomButton(
-            text="📋 Colar",
-            font_size="11sp",
+            text="Colar",
+            font_size="12sp",
             bg_color=Theme.get_input_bg(self.app.is_dark),
             text_color=Theme.get_text(self.app.is_dark),
             size_hint=(None, 1),
-            width=65,
+            width=58,
             radius=[6, 6, 6, 6]
         )
         self.btn_paste.bind(on_release=self.paste_from_clipboard)
@@ -65,12 +64,12 @@ class SingleDownloadScreen(Screen):
 
         # Botão Buscar
         self.btn_fetch = CustomButton(
-            text="🔍 Buscar",
-            font_size="11sp",
+            text="Buscar",
+            font_size="12sp",
             bg_color=Theme.BLUE_ACTION,
             text_color=[1, 1, 1, 1],
             size_hint=(None, 1),
-            width=65,
+            width=58,
             radius=[6, 6, 6, 6]
         )
         self.btn_fetch.bind(on_release=lambda x: self.fetch_video_info())
@@ -120,11 +119,11 @@ class SingleDownloadScreen(Screen):
         quality_box.add_widget(chips_row)
         self.container.add_widget(quality_box)
 
-        # 4. Botões de Ação Principais (Vermelho e Azul)
+        # 4. Botões de Ação Principais
         action_row = BoxLayout(orientation='horizontal', spacing=10, size_hint_y=None, height=46)
 
         self.btn_download_video = CustomButton(
-            text="🔴 Baixar Vídeo",
+            text="Baixar Vídeo",
             font_size="14sp",
             bg_color=Theme.RED_ACTION,
             text_color=[1, 1, 1, 1],
@@ -135,7 +134,7 @@ class SingleDownloadScreen(Screen):
         action_row.add_widget(self.btn_download_video)
 
         self.btn_download_audio = CustomButton(
-            text="🔵 Baixar Áudio",
+            text="Baixar Áudio",
             font_size="14sp",
             bg_color=Theme.BLUE_ACTION,
             text_color=[1, 1, 1, 1],
@@ -177,7 +176,7 @@ class SingleDownloadScreen(Screen):
             self.app.show_message("Aviso", "Por favor, insira ou cole a URL.")
             return
 
-        self.btn_fetch.text = "⌛..."
+        self.btn_fetch.text = "..."
         self.progress_panel.set_progress(0, status_text="Buscando informações do vídeo...")
 
         def _fetch():
@@ -190,7 +189,7 @@ class SingleDownloadScreen(Screen):
         threading.Thread(target=_fetch, daemon=True).start()
 
     def _on_info_fetched(self, info):
-        self.btn_fetch.text = "🔍 Buscar"
+        self.btn_fetch.text = "Buscar"
         self.current_video_info = info
         self.preview_card.set_data(
             title=info.get("title", ""),
@@ -202,7 +201,7 @@ class SingleDownloadScreen(Screen):
         self.progress_panel.set_progress(0, status_text="Pronto para baixar!")
 
     def _on_info_error(self, err_msg):
-        self.btn_fetch.text = "🔍 Buscar"
+        self.btn_fetch.text = "Buscar"
         self.progress_panel.set_progress(0, status_text="Erro ao obter informações.")
         self.app.show_message("Erro", f"Não foi possível obter dados da URL:\n{err_msg}")
 
@@ -245,7 +244,7 @@ class SingleDownloadScreen(Screen):
     def _on_download_success(self, title, filepath, thumbnail, item_type):
         self.btn_download_video.disabled = False
         self.btn_download_audio.disabled = False
-        self.progress_panel.set_progress(100, status_text="✅ Download concluído!")
+        self.progress_panel.set_progress(100, status_text="Download concluído com sucesso!")
         
         # Salva no histórico
         self.app.history.add_item(
@@ -255,12 +254,12 @@ class SingleDownloadScreen(Screen):
             item_type=item_type,
             thumbnail=thumbnail or (self.current_video_info.get("thumbnail") if self.current_video_info else "")
         )
-        self.app.show_message("Sucesso! 🎉", f"Download finalizado:\n{title}\n\nSalvo em:\n{filepath}")
+        self.app.show_message("Sucesso", f"Download finalizado:\n{title}\n\nSalvo em:\n{filepath}")
 
     def _on_download_failed(self, err):
         self.btn_download_video.disabled = False
         self.btn_download_audio.disabled = False
-        self.progress_panel.set_progress(0, status_text="⚠️ Falha no download")
+        self.progress_panel.set_progress(0, status_text="Falha no download")
         self.app.show_message("Aviso", f"Resultado: {err}")
 
     def cancel_download(self):
@@ -277,4 +276,3 @@ class SingleDownloadScreen(Screen):
         self.quality_title.color = Theme.get_text(is_dark)
         self.select_quality(self.selected_quality)
         self.progress_panel.update_theme(is_dark)
-
