@@ -1,5 +1,19 @@
 import time
-from kivy.utils import platform
+import os
+import sys
+
+try:
+    from kivy.utils import platform
+except ImportError:
+    if sys.platform.startswith('win'):
+        platform = 'win'
+    elif sys.platform.startswith('darwin'):
+        platform = 'macosx'
+    elif 'ANDROID_ARGUMENT' in os.environ or 'ANDROID_ROOT' in os.environ:
+        platform = 'android'
+    else:
+        platform = 'linux'
+
 
 class Notifier:
     def __init__(self):

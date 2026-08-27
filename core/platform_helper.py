@@ -1,7 +1,19 @@
 import os
 import sys
 import subprocess
-from kivy.utils import platform
+
+try:
+    from kivy.utils import platform
+except ImportError:
+    if sys.platform.startswith('win'):
+        platform = 'win'
+    elif sys.platform.startswith('darwin'):
+        platform = 'macosx'
+    elif 'ANDROID_ARGUMENT' in os.environ or 'ANDROID_ROOT' in os.environ:
+        platform = 'android'
+    else:
+        platform = 'linux'
+
 
 class PlatformHelper:
     @staticmethod
