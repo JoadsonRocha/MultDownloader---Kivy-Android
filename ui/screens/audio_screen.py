@@ -51,12 +51,14 @@ class AudioScreen(Screen):
         # Botão Colar
         self.btn_paste = CustomButton(
             text="Colar",
-            font_size="12sp",
+            icon="content-paste",
+            font_size="11sp",
             bg_color=Theme.get_input_bg(self.app.is_dark),
             text_color=Theme.get_text(self.app.is_dark),
+            border_color=Theme.get_border(self.app.is_dark),
             size_hint=(None, 1),
-            width=58,
-            radius=[6, 6, 6, 6]
+            width=76,
+            radius=[8, 8, 8, 8]
         )
         self.btn_paste.bind(on_release=self.paste_from_clipboard)
         input_card.add_widget(self.btn_paste)
@@ -64,12 +66,13 @@ class AudioScreen(Screen):
         # Botão Buscar
         self.btn_fetch = CustomButton(
             text="Buscar",
-            font_size="12sp",
+            icon="magnify",
+            font_size="11sp",
             bg_color=Theme.BLUE_ACTION,
             text_color=[1, 1, 1, 1],
             size_hint=(None, 1),
-            width=58,
-            radius=[6, 6, 6, 6]
+            width=80,
+            radius=[8, 8, 8, 8]
         )
         self.btn_fetch.bind(on_release=lambda x: self.fetch_audio_info())
         input_card.add_widget(self.btn_fetch)
@@ -120,13 +123,14 @@ class AudioScreen(Screen):
 
         # 4. Botão de Extração de Áudio
         self.btn_download_audio = CustomButton(
-            text="EXTRAIR E BAIXAR ÁUDIO (MP3)",
+            text="Extrair e Baixar MP3",
+            icon="music-note",
             font_size="14sp",
             bg_color=Theme.BLUE_ACTION,
             text_color=[1, 1, 1, 1],
             size_hint_y=None,
-            height=46,
-            radius=[8, 8, 8, 8]
+            height=48,
+            radius=[10, 10, 10, 10]
         )
         self.btn_download_audio.bind(on_release=lambda x: self.start_audio_download())
         self.container.add_widget(self.btn_download_audio)
