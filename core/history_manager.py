@@ -5,13 +5,29 @@ import time
 class HistoryManager:
     def __init__(self, storage_path=None):
         if storage_path is None:
-            # Salva na pasta do app
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            self.file_path = os.path.join(base_dir, "download_history.json")
+            # Fix #8: usa user_data_dir do Kivy (gravável no Android) como prioridade
+            data_dir = self._get_data_dir()
+            self.file_path = os.path.join(data_dir, "download_history.json")
         else:
             self.file_path = os.path.join(storage_path, "download_history.json")
-            
+
         self.history = self._load()
+
+    @staticmethod
+    def _get_data_dir():
+        """Retorna o diretório de dados gravável em qualquer plataforma."""
+        try:
+            from kivy.app import App
+            app = App.get_running_app()
+            if app and hasattr(app, 'user_data_dir') and app.user_data_dir:
+                os.makedirs(app.user_data_dir, exist_ok=True)
+                return app.user_data_dir
+        except Exception:
+            pass
+        # Fallback: pasta home do usuário (seguro em Desktop e Android com permissão)
+        fallback = os.path.join(os.path.expanduser("~"), ".multdownloader")
+        os.makedirs(fallback, exist_ok=True)
+        return fallback
 
     def _load(self):
         if os.path.exists(self.file_path):

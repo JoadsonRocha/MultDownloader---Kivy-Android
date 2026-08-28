@@ -33,11 +33,14 @@ class DeveloperScreen(Screen):
         )
 
         # Logo
+        import os
+        logo_path = 'logo.png' if os.path.exists('logo.png') else 'assets/icon.png'
         self.logo_img = Image(
-            source='logo.png',
+            source=logo_path,
             size_hint=(None, None),
             size=(72, 72),
-            pos_hint={'center_x': 0.5}
+            pos_hint={'center_x': 0.5},
+            fit_mode="contain"
         )
         self.card.add_widget(self.logo_img)
 

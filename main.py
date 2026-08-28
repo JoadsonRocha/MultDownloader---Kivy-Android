@@ -11,7 +11,7 @@ from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.uix.modalview import ModalView
 from kivy.clock import Clock
-from kivy.graphics import Color, Rectangle, RoundedRectangle
+from kivy.graphics import Color, Rectangle  # Fix #16: RoundedRectangle não é usado aqui
 from kivy.utils import platform
 
 # Define o tamanho padrão da janela no Desktop para simular um celular perfeitamente
@@ -58,43 +58,45 @@ class MultDownloadApp(MDApp):
         # Layout Principal (Conteúdo Vertical)
         self.main_box = BoxLayout(orientation='vertical', spacing=0)
 
-        # 1. Top Bar / Cabeçalho
+        # 1. Top Bar / Cabeçalho Moderno e Simétrico
         self.top_bar = BoxLayout(
             orientation='horizontal',
             size_hint_y=None,
             height=54,
-            padding=[10, 6, 10, 6],
-            spacing=8
+            padding=[12, 7, 12, 7],
+            spacing=10
         )
         self._update_top_bar_canvas()
         self.top_bar.bind(pos=self._update_top_bar_canvas, size=self._update_top_bar_canvas)
 
-        # Botão Menu Hambúrguer (≡)
+        # Botão Menu Hambúrguer (Ícone moderno arredondado)
         self.btn_menu = CustomButton(
-            text="Menu",
-            font_size="12sp",
-            bg_color=Theme.get_input_bg(self.is_dark),
+            text="☰",
+            font_size="17sp",
+            bg_color=Theme.get_button_bg(self.is_dark),
             text_color=Theme.get_text(self.is_dark),
+            border_color=Theme.get_border(self.is_dark),
             size_hint=(None, 1),
-            width=54,
-            radius=[8, 8, 8, 8]
+            width=42,
+            radius=[12, 12, 12, 12]
         )
         self.btn_menu.bind(on_release=lambda x: self.toggle_drawer())
         self.top_bar.add_widget(self.btn_menu)
 
         # Logo Ícone
-        logo_path = "logo.png" if os.path.exists("logo.png") else "logo.ico"
+        # Fix #17: usa apenas .png (suportado em Android e Desktop)
+        logo_path = "logo.png" if os.path.exists("logo.png") else "assets/icon.png"
         self.logo_img = Image(
             source=logo_path,
             size_hint=(None, 1),
-            width=36,
-            allow_stretch=True
+            width=32,
+            fit_mode="contain"
         )
         self.top_bar.add_widget(self.logo_img)
 
         # Título do App
         self.title_label = Label(
-            text="[b][color=2196F3]Mult[/color][color=FA5858]Download[/color][/b] [size=11sp]4.2.0[/size]",
+            text="[b][color=3B82F6]Mult[/color][color=EF4444]Download[/color][/b] [size=10sp][color=949EAD]4.2.0[/color][/size]",
             markup=True,
             font_size="15sp",
             halign='left',
@@ -104,15 +106,16 @@ class MultDownloadApp(MDApp):
         self.title_label.bind(size=lambda *x: setattr(self.title_label, 'text_size', (self.title_label.width, None)))
         self.top_bar.add_widget(self.title_label)
 
-        # Botão Tema (Claro / Escuro)
+        # Botão Tema (Ícone moderno arredondado ☀️/🌙)
         self.btn_theme = CustomButton(
-            text="Tema" if not self.is_dark else "Escuro",
-            font_size="11sp",
-            bg_color=Theme.get_input_bg(self.is_dark),
+            text="☀️" if self.is_dark else "🌙",
+            font_size="15sp",
+            bg_color=Theme.get_button_bg(self.is_dark),
             text_color=Theme.get_text(self.is_dark),
+            border_color=Theme.get_border(self.is_dark),
             size_hint=(None, 1),
-            width=56,
-            radius=[8, 8, 8, 8]
+            width=42,
+            radius=[12, 12, 12, 12]
         )
         self.btn_theme.bind(on_release=lambda x: self.toggle_theme())
         self.top_bar.add_widget(self.btn_theme)
@@ -204,7 +207,8 @@ class MultDownloadApp(MDApp):
 
     def _build_drawer(self):
         """Constrói o menu lateral com todas as opções da imagem do Desktop."""
-        self.drawer_overlay = FloatLayout(size_hint=(1, 1), pos_hint={'x': -1, 'y': 0})
+        # Fix #6: pos_hint corrigido — overlay deve cobrir a janela inteira a partir do origin
+        self.drawer_overlay = FloatLayout(size_hint=(1, 1), pos_hint={'x': 0, 'y': 0})
         
         # Fundo semi-transparente para fechar ao tocar fora
         self.drawer_dim = Button(
@@ -229,7 +233,8 @@ class MultDownloadApp(MDApp):
 
         # Cabeçalho do Drawer
         drawer_header = BoxLayout(orientation='horizontal', spacing=10, size_hint_y=None, height=50)
-        logo_path = "logo.png" if os.path.exists("logo.png") else "logo.ico"
+        # Fix #17: usa apenas .png no drawer
+        logo_path = "logo.png" if os.path.exists("logo.png") else "assets/icon.png"
         drawer_logo = Image(source=logo_path, size_hint=(None, 1), width=40)
         drawer_header.add_widget(drawer_logo)
 
@@ -244,11 +249,15 @@ class MultDownloadApp(MDApp):
         drawer_header.add_widget(drawer_title)
         self.drawer_panel.add_widget(drawer_header)
 
-        # Linha divisória
+        # Linha divisória com bind para re-renderizar na posição correta (Fix #11)
         div = BoxLayout(size_hint_y=None, height=1)
-        with div.canvas:
-            Color(*Theme.get_border(self.is_dark))
-            Rectangle(pos=div.pos, size=div.size)
+        def _draw_div(*args):
+            div.canvas.clear()
+            with div.canvas:
+                Color(*Theme.get_border(self.is_dark))
+                Rectangle(pos=div.pos, size=div.size)
+        div.bind(pos=_draw_div, size=_draw_div)
+        _draw_div()
         self.drawer_panel.add_widget(div)
 
         # Itens do Menu (Idênticos ao Desktop)
@@ -317,7 +326,8 @@ class MultDownloadApp(MDApp):
 
     def switch_screen(self, screen_name):
         self.sm.current = screen_name
-        
+
+        # Fix #4: para telas sem tab (settings, developer), nenhum botão da barra fica ativo
         # Atualiza botões da barra inferior
         for name, btn in self.bottom_nav_buttons.items():
             is_active = (name == screen_name)
@@ -352,9 +362,9 @@ class MultDownloadApp(MDApp):
             self.is_dark = not self.is_dark
 
         Window.clearcolor = Theme.get_bg(self.is_dark)
-        self.btn_theme.text = "Tema" if not self.is_dark else "Escuro"
-        self.btn_theme.set_color(Theme.get_input_bg(self.is_dark), Theme.get_text(self.is_dark))
-        self.btn_menu.set_color(Theme.get_input_bg(self.is_dark), Theme.get_text(self.is_dark))
+        self.btn_theme.text = "☀️" if self.is_dark else "🌙"
+        self.btn_theme.set_color(Theme.get_button_bg(self.is_dark), Theme.get_text(self.is_dark), Theme.get_border(self.is_dark))
+        self.btn_menu.set_color(Theme.get_button_bg(self.is_dark), Theme.get_text(self.is_dark), Theme.get_border(self.is_dark))
 
         self._update_top_bar_canvas()
         self._update_bottom_bar_canvas()

@@ -38,18 +38,10 @@ class Notifier:
                     app_name="MultDownloader"
                 )
             except Exception as e:
-                print(f"[Notifier] Erro ao enviar notificação: {e}")
+                print(f"[Notifier] Erro ao enviar notificação Android: {e}")
         else:
-            # Em desktop apenas loga ou usa plyer se disponível
-            try:
-                from plyer import notification
-                notification.notify(
-                    title=title,
-                    message=message,
-                    app_name="MultDownloader"
-                )
-            except Exception:
-                pass
+            # Em Desktop apenas loga no console — plyer/balloontip é instável no Windows sem bandeja
+            print(f"[Notifier] {title}: {message}")
 
     def notify_progress(self, percent, filename="Vídeo"):
         """Notifica o progresso a cada 10% para não sobrecarregar o Android."""

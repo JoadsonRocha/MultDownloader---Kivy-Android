@@ -162,14 +162,14 @@ class AudioScreen(Screen):
             return
 
         self.btn_fetch.text = "..."
-        self.progress_panel.set_progress(0, status_text="Buscando áudio...")
 
         def _fetch():
             try:
                 info = self.app.downloader.extract_info(url)
                 Clock.schedule_once(lambda dt: self._on_info_fetched(info))
             except Exception as e:
-                Clock.schedule_once(lambda dt: self._on_info_error(str(e)))
+                err_msg = str(e)  # captura antes do lambda — evita NameError no Python 3.11+
+                Clock.schedule_once(lambda dt: self._on_info_error(err_msg))
 
         threading.Thread(target=_fetch, daemon=True).start()
 
@@ -183,11 +183,9 @@ class AudioScreen(Screen):
             duration=info.get("duration", "00:00"),
             views=info.get("views", "0")
         )
-        self.progress_panel.set_progress(0, status_text="Áudio pronto para extração!")
 
     def _on_info_error(self, err):
         self.btn_fetch.text = "Buscar"
-        self.progress_panel.set_progress(0, status_text="Erro ao buscar.")
         self.app.show_message("Erro", f"Falha ao obter áudio:\n{err}")
 
     def start_audio_download(self):
@@ -197,7 +195,9 @@ class AudioScreen(Screen):
             return
 
         self.btn_download_audio.disabled = True
-        self.progress_panel.set_progress(0, status_text=f"Extraindo áudio ({self.selected_bitrate})...")
+        status_msg = f"Extraindo áudio ({self.selected_bitrate})..."
+        self.progress_panel.show(status_text=status_msg)
+        self.progress_panel.set_progress(0, status_text=status_msg)
 
         def on_progress(percent, speed, eta, downloaded, total):
             Clock.schedule_once(lambda dt: self.progress_panel.set_progress(
@@ -242,7 +242,7 @@ class AudioScreen(Screen):
     def cancel_download(self):
         self.app.downloader.cancel()
         self.btn_download_audio.disabled = False
-        self.progress_panel.reset()
+        self.progress_panel.hide()
 
     def update_theme(self, is_dark):
         self.input_card.set_bg_color(Theme.get_card(is_dark), Theme.get_border(is_dark))

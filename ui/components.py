@@ -33,23 +33,26 @@ class RoundedCard(BoxLayout):
                 Line(rounded_rectangle=(self.x, self.y, self.width, self.height, self.radius[0]), width=1.1)
 
 class CustomButton(Button):
-    def __init__(self, bg_color=Theme.RED_ACTION, text_color=[1, 1, 1, 1], radius=[8, 8, 8, 8], **kwargs):
+    def __init__(self, bg_color=Theme.RED_ACTION, text_color=[1, 1, 1, 1], radius=[8, 8, 8, 8], border_color=None, **kwargs):
         super().__init__(**kwargs)
         self.background_color = (0, 0, 0, 0)
         self.background_normal = ''
         self.bg_color = bg_color
         self.text_color = text_color
+        self.border_color = border_color
         self.radius = radius
         self.color = text_color
         self.bold = True
         self.bind(pos=self._update_canvas, size=self._update_canvas)
         self._update_canvas()
 
-    def set_color(self, bg_color, text_color=None):
+    def set_color(self, bg_color, text_color=None, border_color=None):
         self.bg_color = bg_color
         if text_color:
             self.text_color = text_color
             self.color = text_color
+        if border_color is not None:
+            self.border_color = border_color
         self._update_canvas()
 
     def _update_canvas(self, *args):
@@ -57,6 +60,9 @@ class CustomButton(Button):
         with self.canvas.before:
             Color(*self.bg_color)
             RoundedRectangle(pos=self.pos, size=self.size, radius=self.radius)
+            if self.border_color:
+                Color(*self.border_color)
+                Line(rounded_rectangle=(self.x, self.y, self.width, self.height, self.radius[0]), width=1.1)
 
 class VideoPreviewCard(RoundedCard):
     def __init__(self, is_dark=False, **kwargs):
@@ -70,8 +76,7 @@ class VideoPreviewCard(RoundedCard):
         # Imagem / Thumbnail
         self.thumbnail = AsyncImage(
             source='',
-            allow_stretch=True,
-            keep_ratio=True,
+            fit_mode="cover",
             size_hint_y=None,
             height=140
         )
@@ -144,15 +149,19 @@ class VideoPreviewCard(RoundedCard):
         self.views_label.color = Theme.get_subtext(is_dark)
 
 class ProgressPanel(RoundedCard):
-    def __init__(self, is_dark=False, on_cancel=None, **kwargs):
+    def __init__(self, is_dark=False, on_cancel=None, auto_hide=True, **kwargs):
         kwargs.setdefault('orientation', 'vertical')
-        kwargs.setdefault('padding', 12)
+        kwargs.setdefault('padding', [0, 0, 0, 0] if auto_hide else 12)
         kwargs.setdefault('spacing', 6)
         kwargs.setdefault('size_hint_y', None)
-        kwargs.setdefault('height', 105)
+        kwargs.setdefault('height', 0 if auto_hide else 105)
         super().__init__(bg_color=Theme.get_card(is_dark), border_color=Theme.get_border(is_dark), **kwargs)
 
+        self.is_dark = is_dark
         self.on_cancel = on_cancel
+        self.is_visible = not auto_hide
+        self.opacity = 0 if auto_hide else 1
+        self.disabled = auto_hide
 
         # Linha Superior: Status e Porcentagem
         top_box = BoxLayout(orientation='horizontal', size_hint_y=None, height=24)
@@ -214,7 +223,30 @@ class ProgressPanel(RoundedCard):
 
         self.add_widget(bottom_box)
 
+    def show(self, status_text=None):
+        """Torna o painel de progresso visível ao iniciar download."""
+        self.is_visible = True
+        self.disabled = False
+        self.padding = [12, 10, 12, 10]
+        self.height = 105
+        self.opacity = 1
+        if status_text:
+            self.status_label.text = status_text
+        self._update_canvas()
+
+    def hide(self):
+        """Oculta o painel de progresso."""
+        self.is_visible = False
+        self.disabled = True
+        self.padding = [0, 0, 0, 0]
+        self.height = 0
+        self.opacity = 0
+        self.reset()
+        self._update_canvas()
+
     def set_progress(self, percent, speed_str="", eta_str="", status_text=None):
+        if not self.is_visible:
+            self.show()
         self.bar.value = percent
         self.percent_label.text = f"{int(percent)}%"
         if speed_str:
@@ -232,7 +264,11 @@ class ProgressPanel(RoundedCard):
         self.status_label.text = "Pronto para baixar"
 
     def update_theme(self, is_dark):
-        self.set_bg_color(Theme.get_card(is_dark), Theme.get_border(is_dark))
+        self.is_dark = is_dark
+        if self.is_visible:
+            self.set_bg_color(Theme.get_card(is_dark), Theme.get_border(is_dark))
+        else:
+            self.set_bg_color((0, 0, 0, 0), None)
         self.status_label.color = Theme.get_text(is_dark)
         self.speed_label.color = Theme.get_subtext(is_dark)
         self.eta_label.color = Theme.get_subtext(is_dark)

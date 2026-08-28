@@ -1,29 +1,32 @@
 """
-Paleta de cores e estilos fiéis ao MultDownload 4.2.0 Desktop
+Paleta de cores e estilos moderna e clean para o MultDownloader
 """
 
 class Theme:
-    # Cores de Ação (Idênticas ao Desktop)
-    RED_ACTION = [0.98, 0.35, 0.35, 1.0]       # #FA5858 (Baixar Vídeo)
-    BLUE_ACTION = [0.13, 0.58, 0.95, 1.0]      # #2196F3 (Baixar Áudio)
-    GREEN_SUCCESS = [0.18, 0.80, 0.44, 1.0]    # #2ECC71 (Sucesso)
-    ORANGE_WARNING = [0.95, 0.61, 0.07, 1.0]   # #F39C12 (Aviso)
+    # Cores de Ação Vibrantes e Modernas
+    RED_ACTION = [0.94, 0.27, 0.31, 1.0]       # #EF4444 (Coral Red Moderno)
+    BLUE_ACTION = [0.15, 0.50, 0.98, 1.0]      # #2563EB (Electric Blue Moderno)
+    GREEN_SUCCESS = [0.13, 0.77, 0.45, 1.0]    # #10B981 (Emerald Green)
+    ORANGE_WARNING = [0.96, 0.62, 0.13, 1.0]   # #F59E0B (Amber)
+    PURPLE_ACCENT = [0.55, 0.36, 0.96, 1.0]    # #8B5CF6 (Purple)
     
-    # Cores Tema Claro
-    LIGHT_BG = [0.96, 0.97, 0.98, 1.0]         # #F5F7FA
+    # Cores Tema Claro (Clean & Airy)
+    LIGHT_BG = [0.96, 0.97, 0.98, 1.0]         # #F8FAFC
     LIGHT_CARD = [1.0, 1.0, 1.0, 1.0]          # #FFFFFF
-    LIGHT_TEXT = [0.15, 0.17, 0.20, 1.0]       # #272B33
-    LIGHT_SUBTEXT = [0.45, 0.50, 0.55, 1.0]    # #73808C
-    LIGHT_BORDER = [0.88, 0.90, 0.92, 1.0]     # #E0E6EB
-    LIGHT_INPUT_BG = [0.94, 0.95, 0.96, 1.0]   # #F0F2F5
+    LIGHT_TEXT = [0.09, 0.11, 0.15, 1.0]       # #0F172A
+    LIGHT_SUBTEXT = [0.42, 0.47, 0.55, 1.0]    # #64748B
+    LIGHT_BORDER = [0.89, 0.91, 0.94, 1.0]     # #E2E8F0
+    LIGHT_INPUT_BG = [0.94, 0.96, 0.98, 1.0]   # #F1F5F9
+    LIGHT_BUTTON_BG = [0.92, 0.94, 0.97, 1.0]  # #EAF0F8
 
-    # Cores Tema Escuro
-    DARK_BG = [0.08, 0.09, 0.11, 1.0]          # #14171C
-    DARK_CARD = [0.14, 0.15, 0.18, 1.0]        # #24272E
-    DARK_TEXT = [0.95, 0.96, 0.98, 1.0]        # #F2F5FA
-    DARK_SUBTEXT = [0.65, 0.68, 0.73, 1.0]     # #A6AEBA
-    DARK_BORDER = [0.22, 0.24, 0.28, 1.0]      # #383D47
-    DARK_INPUT_BG = [0.18, 0.20, 0.23, 1.0]    # #2E333B
+    # Cores Tema Escuro (Clean Deep Slate — Elegante e Sem Poluição Visual)
+    DARK_BG = [0.07, 0.08, 0.10, 1.0]          # #12151A (Fundo profundo)
+    DARK_CARD = [0.11, 0.13, 0.16, 1.0]        # #1C2129 (Card elevado)
+    DARK_TEXT = [0.96, 0.97, 0.98, 1.0]        # #F8FAFC (Texto nítido)
+    DARK_SUBTEXT = [0.58, 0.62, 0.68, 1.0]     # #949EAD (Subtexto suave)
+    DARK_BORDER = [0.18, 0.21, 0.26, 1.0]      # #2E3642 (Borda sutil 1px)
+    DARK_INPUT_BG = [0.08, 0.09, 0.12, 1.0]    # #14181F (Campo rebaixado)
+    DARK_BUTTON_BG = [0.14, 0.17, 0.22, 1.0]   # #242B38 (Botão de topo)
 
     @classmethod
     def get_bg(cls, is_dark):
@@ -48,4 +51,8 @@ class Theme:
     @classmethod
     def get_input_bg(cls, is_dark):
         return cls.DARK_INPUT_BG if is_dark else cls.LIGHT_INPUT_BG
+
+    @classmethod
+    def get_button_bg(cls, is_dark):
+        return cls.DARK_BUTTON_BG if is_dark else cls.LIGHT_BUTTON_BG
 

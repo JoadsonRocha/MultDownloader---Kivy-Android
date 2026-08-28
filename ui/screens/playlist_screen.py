@@ -16,6 +16,7 @@ class PlaylistScreen(Screen):
         self.name = "playlist"
         self.playlist_info = None
         self.is_audio_mode = False
+        self.selected_quality = "720p"  # Fix #13: qualidade configurável
 
         scroll = ScrollView(do_scroll_x=False, do_scroll_y=True)
         self.container = BoxLayout(
@@ -111,6 +112,42 @@ class PlaylistScreen(Screen):
 
         self.container.add_widget(self.info_card)
 
+        # Fix #13: Seletor de Qualidade de Vídeo
+        quality_box = BoxLayout(orientation='vertical', spacing=6, size_hint_y=None, height=75)
+        self.quality_title = Label(
+            text="Qualidade do Vídeo (modo vídeo):",
+            font_size="13sp",
+            bold=True,
+            color=Theme.get_text(self.app.is_dark),
+            size_hint_y=None,
+            height=20,
+            halign='left'
+        )
+        self.quality_title.bind(size=lambda *x: setattr(self.quality_title, 'text_size', (self.quality_title.width, None)))
+        quality_box.add_widget(self.quality_title)
+
+        chips_row = BoxLayout(orientation='horizontal', spacing=8, size_hint_y=None, height=36)
+        self.quality_buttons = {}
+        qualities = ["1080p", "720p", "480p", "360p"]
+        for q in qualities:
+            is_active = (q == "720p")
+            bg = Theme.RED_ACTION if is_active else Theme.get_input_bg(self.app.is_dark)
+            fg = [1, 1, 1, 1] if is_active else Theme.get_text(self.app.is_dark)
+            btn = CustomButton(
+                text=q,
+                font_size="12sp",
+                bg_color=bg,
+                text_color=fg,
+                radius=[18, 18, 18, 18],
+                size_hint_x=0.25
+            )
+            btn.bind(on_release=lambda instance, val=q: self.select_quality(val))
+            self.quality_buttons[q] = btn
+            chips_row.add_widget(btn)
+
+        quality_box.add_widget(chips_row)
+        self.container.add_widget(quality_box)
+
         # 3. Tipo de Download: Vídeo ou Áudio
         mode_box = BoxLayout(orientation='horizontal', spacing=10, size_hint_y=None, height=40)
         self.btn_mode_video = CustomButton(
@@ -166,6 +203,14 @@ class PlaylistScreen(Screen):
             self.url_input.text = text.strip()
             self.fetch_playlist()
 
+    def select_quality(self, quality):  # Fix #13
+        self.selected_quality = quality
+        for q, btn in self.quality_buttons.items():
+            is_active = (q == quality)
+            bg = Theme.RED_ACTION if is_active else Theme.get_input_bg(self.app.is_dark)
+            fg = [1, 1, 1, 1] if is_active else Theme.get_text(self.app.is_dark)
+            btn.set_color(bg, fg)
+
     def set_mode(self, is_audio):
         self.is_audio_mode = is_audio
         if is_audio:
@@ -182,14 +227,14 @@ class PlaylistScreen(Screen):
             return
 
         self.btn_fetch.text = "..."
-        self.progress_panel.set_progress(0, status_text="Carregando playlist...")
 
         def _fetch():
             try:
                 info = self.app.downloader.extract_info(url)
                 Clock.schedule_once(lambda dt: self._on_playlist_fetched(info))
             except Exception as e:
-                Clock.schedule_once(lambda dt: self._on_fetch_error(str(e)))
+                err_msg = str(e)
+                Clock.schedule_once(lambda dt: self._on_fetch_error(err_msg))
 
         threading.Thread(target=_fetch, daemon=True).start()
 
@@ -199,11 +244,9 @@ class PlaylistScreen(Screen):
         count = info.get("playlist_count", 0) or len(info.get("entries", []))
         self.playlist_title.text = f"{info.get('title', 'Playlist')}"
         self.playlist_details.text = f"Total de vídeos: {count} • Canal: {info.get('uploader', 'Vários')}"
-        self.progress_panel.set_progress(0, status_text="Playlist carregada! Clique em Baixar.")
 
     def _on_fetch_error(self, err):
         self.btn_fetch.text = "Buscar"
-        self.progress_panel.set_progress(0, status_text="Erro ao carregar.")
         self.app.show_message("Erro", f"Falha ao carregar playlist:\n{err}")
 
     def start_playlist_download(self):
@@ -213,7 +256,9 @@ class PlaylistScreen(Screen):
             return
 
         self.btn_download_all.disabled = True
-        self.progress_panel.set_progress(0, status_text="Iniciando download da playlist...")
+        status_msg = "Iniciando download da playlist..."
+        self.progress_panel.show(status_text=status_msg)
+        self.progress_panel.set_progress(0, status_text=status_msg)
 
         def on_item_start(index, total, title):
             Clock.schedule_once(lambda dt: self.progress_panel.set_progress(
@@ -229,12 +274,15 @@ class PlaylistScreen(Screen):
             ))
 
         def on_item_complete(index, total, title, filepath):
-            self.app.history.add_item(
-                title=title,
-                url=url,
-                file_path=filepath,
-                item_type="audio" if self.is_audio_mode else "video"
-            )
+            # Fix #3: usa Clock.schedule_once para segurança de thread
+            def _add_history(dt):
+                self.app.history.add_item(
+                    title=title,
+                    url=url,
+                    file_path=filepath,
+                    item_type="audio" if self.is_audio_mode else "video"
+                )
+            Clock.schedule_once(_add_history)
 
         def on_all_complete(completed, total):
             Clock.schedule_once(lambda dt: self._on_playlist_success(completed, total))
@@ -244,7 +292,7 @@ class PlaylistScreen(Screen):
 
         self.app.downloader.download_playlist(
             url=url,
-            quality="audio" if self.is_audio_mode else "720p",
+            quality="audio" if self.is_audio_mode else self.selected_quality,  # Fix #13
             on_item_start=on_item_start,
             on_progress=on_progress,
             on_item_complete=on_item_complete,
@@ -266,7 +314,7 @@ class PlaylistScreen(Screen):
     def cancel_download(self):
         self.app.downloader.cancel()
         self.btn_download_all.disabled = False
-        self.progress_panel.reset()
+        self.progress_panel.hide()
 
     def update_theme(self, is_dark):
         self.input_card.set_bg_color(Theme.get_card(is_dark), Theme.get_border(is_dark))
@@ -275,5 +323,8 @@ class PlaylistScreen(Screen):
         self.info_card.set_bg_color(Theme.get_card(is_dark), Theme.get_border(is_dark))
         self.playlist_title.color = Theme.get_text(is_dark)
         self.playlist_details.color = Theme.get_subtext(is_dark)
+        # Fix #13: atualiza chips de qualidade
+        self.quality_title.color = Theme.get_text(is_dark)
+        self.select_quality(self.selected_quality)
         self.set_mode(self.is_audio_mode)
         self.progress_panel.update_theme(is_dark)

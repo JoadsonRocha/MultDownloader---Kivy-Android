@@ -177,14 +177,14 @@ class SingleDownloadScreen(Screen):
             return
 
         self.btn_fetch.text = "..."
-        self.progress_panel.set_progress(0, status_text="Buscando informações do vídeo...")
 
         def _fetch():
             try:
                 info = self.app.downloader.extract_info(target_url)
                 Clock.schedule_once(lambda dt: self._on_info_fetched(info))
             except Exception as e:
-                Clock.schedule_once(lambda dt: self._on_info_error(str(e)))
+                err_msg = str(e)  # captura antes do lambda — evita NameError no Python 3.11+
+                Clock.schedule_once(lambda dt: self._on_info_error(err_msg))
 
         threading.Thread(target=_fetch, daemon=True).start()
 
@@ -198,11 +198,9 @@ class SingleDownloadScreen(Screen):
             duration=info.get("duration", "00:00"),
             views=info.get("views", "0")
         )
-        self.progress_panel.set_progress(0, status_text="Pronto para baixar!")
 
     def _on_info_error(self, err_msg):
         self.btn_fetch.text = "Buscar"
-        self.progress_panel.set_progress(0, status_text="Erro ao obter informações.")
         self.app.show_message("Erro", f"Não foi possível obter dados da URL:\n{err_msg}")
 
     def start_download(self, is_audio=False):
@@ -211,11 +209,13 @@ class SingleDownloadScreen(Screen):
             self.app.show_message("Aviso", "Insira a URL do vídeo.")
             return
 
-        quality = "audio" if is_audio else self.selected_quality
-        status_msg = "Extraindo áudio..." if is_audio else f"Baixando vídeo ({quality})..."
+        # Fix #9: áudio usa qualidade mp3_320kbps para ativar o pós-processador FFmpeg
+        quality = "mp3_320kbps" if is_audio else self.selected_quality
+        status_msg = "Extraindo áudio MP3..." if is_audio else f"Baixando vídeo ({quality})..."
         
         self.btn_download_video.disabled = True
         self.btn_download_audio.disabled = True
+        self.progress_panel.show(status_text=status_msg)
         self.progress_panel.set_progress(0, status_text=status_msg)
 
         def on_progress(percent, speed, eta, downloaded, total):
@@ -266,7 +266,7 @@ class SingleDownloadScreen(Screen):
         self.app.downloader.cancel()
         self.btn_download_video.disabled = False
         self.btn_download_audio.disabled = False
-        self.progress_panel.reset()
+        self.progress_panel.hide()
 
     def update_theme(self, is_dark):
         self.input_card.set_bg_color(Theme.get_card(is_dark), Theme.get_border(is_dark))

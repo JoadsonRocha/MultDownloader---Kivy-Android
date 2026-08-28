@@ -120,6 +120,7 @@ class SettingsScreen(Screen):
         self.notif_card.add_widget(self.notif_label)
 
         self.notif_switch = Switch(active=True, size_hint=(None, 1), width=60)
+        self.notif_switch.bind(active=self.on_notif_switch)  # Fix #10: conecta ao Notifier
         self.notif_card.add_widget(self.notif_switch)
         self.container.add_widget(self.notif_card)
 
@@ -128,6 +129,14 @@ class SettingsScreen(Screen):
 
     def on_theme_switch(self, instance, value):
         self.app.toggle_theme(value)
+
+    def on_notif_switch(self, instance, value):  # Fix #10
+        """Habilita ou desabilita as notificações de progresso."""
+        notifier = self.app.downloader.notifier
+        if value:
+            notifier._notify_interval = 2.0   # Intervalo padrão
+        else:
+            notifier._notify_interval = 999999  # Bloqueia notificações
 
     def update_theme(self, is_dark):
         self.title_label.color = Theme.get_text(is_dark)
