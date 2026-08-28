@@ -22,7 +22,7 @@ from core.platform_helper import PlatformHelper
 from core.downloader import DownloaderEngine
 from core.history_manager import HistoryManager
 from ui.theme import Theme
-from ui.components import CustomButton, RoundedCard
+from ui.components import CustomButton, RoundedCard, get_icon
 from ui.screens.browser_screen import BrowserScreen
 from ui.screens.single_download import SingleDownloadScreen
 from ui.screens.playlist_screen import PlaylistScreen
@@ -58,21 +58,21 @@ class MultDownloadApp(MDApp):
         # Layout Principal (Conteúdo Vertical)
         self.main_box = BoxLayout(orientation='vertical', spacing=0)
 
-        # 1. Top Bar / Cabeçalho Moderno e Simétrico
+        # 1. Top Bar / Cabeçalho Moderno e Simétrico com Ícones Vetoriais
         self.top_bar = BoxLayout(
             orientation='horizontal',
             size_hint_y=None,
             height=54,
-            padding=[12, 7, 12, 7],
-            spacing=10
+            padding=[10, 7, 10, 7],
+            spacing=8
         )
         self._update_top_bar_canvas()
         self.top_bar.bind(pos=self._update_top_bar_canvas, size=self._update_top_bar_canvas)
 
-        # Botão Menu Hambúrguer (Ícone moderno arredondado)
+        # Botão Menu Hambúrguer (Ícone vetorial Material Design)
         self.btn_menu = CustomButton(
-            text="☰",
-            font_size="17sp",
+            icon="menu",
+            font_size="22sp",
             bg_color=Theme.get_button_bg(self.is_dark),
             text_color=Theme.get_text(self.is_dark),
             border_color=Theme.get_border(self.is_dark),
@@ -106,10 +106,11 @@ class MultDownloadApp(MDApp):
         self.title_label.bind(size=lambda *x: setattr(self.title_label, 'text_size', (self.title_label.width, None)))
         self.top_bar.add_widget(self.title_label)
 
-        # Botão Tema (Ícone moderno arredondado ☀️/🌙)
+        # Botão Tema (Ícone vetorial Sol/Lua)
+        theme_icon = "weather-sunny" if self.is_dark else "weather-night"
         self.btn_theme = CustomButton(
-            text="☀️" if self.is_dark else "🌙",
-            font_size="15sp",
+            icon=theme_icon,
+            font_size="20sp",
             bg_color=Theme.get_button_bg(self.is_dark),
             text_color=Theme.get_text(self.is_dark),
             border_color=Theme.get_border(self.is_dark),
@@ -144,11 +145,11 @@ class MultDownloadApp(MDApp):
         self.sm.current = "browser"
         self.main_box.add_widget(self.sm)
 
-        # 3. Bottom Bar / Abas Rápidas
+        # 3. Bottom Bar / Abas Rápidas com Ícones Vetoriais
         self.bottom_bar = BoxLayout(
             orientation='horizontal',
             size_hint_y=None,
-            height=50,
+            height=56,
             padding=[4, 4, 4, 4],
             spacing=4
         )
@@ -156,27 +157,32 @@ class MultDownloadApp(MDApp):
         self.bottom_bar.bind(pos=self._update_bottom_bar_canvas, size=self._update_bottom_bar_canvas)
 
         self.bottom_nav_buttons = {}
-        tabs = [
-            ("browser", "Navegar"),
-            ("single_download", "Único"),
-            ("playlist", "Playlist"),
-            ("audio", "Áudio"),
-            ("history", "Histórico")
+        self.tabs_info = [
+            ("browser", "youtube", "Navegar"),
+            ("single_download", "download", "Único"),
+            ("playlist", "playlist-music", "Playlist"),
+            ("audio", "music-note", "Áudio"),
+            ("history", "history", "Histórico")
         ]
 
-        for screen_name, label in tabs:
+        for screen_name, icon_name, label in self.tabs_info:
             is_active = (screen_name == "browser")
             bg = Theme.BLUE_ACTION if is_active else [0, 0, 0, 0]
             fg = [1, 1, 1, 1] if is_active else Theme.get_subtext(self.is_dark)
 
+            icon_char = get_icon(icon_name)
+            formatted_text = f"[font=MDIcon][size=19sp]{icon_char}[/size][/font]\n[size=10sp]{label}[/size]"
+
             btn = CustomButton(
-                text=label,
-                font_size="11sp",
+                text=formatted_text,
+                font_size="10sp",
                 bg_color=bg,
                 text_color=fg,
-                radius=[8, 8, 8, 8],
+                radius=[10, 10, 10, 10],
                 size_hint_x=0.2
             )
+            btn.halign = 'center'
+            btn.valign = 'middle'
             btn.bind(on_release=lambda inst, s=screen_name: self.switch_screen(s))
             self.bottom_nav_buttons[screen_name] = btn
             self.bottom_bar.add_widget(btn)
@@ -260,31 +266,32 @@ class MultDownloadApp(MDApp):
         _draw_div()
         self.drawer_panel.add_widget(div)
 
-        # Itens do Menu (Idênticos ao Desktop)
+        # Itens do Menu com Ícones Vetoriais
         menu_items = [
-            ("browser", "Navegador YouTube"),
-            ("single_download", "Download Único"),
-            ("playlist", "Baixar Playlist"),
-            ("audio", "Baixar Áudio"),
-            ("history", "Histórico de Downloads"),
-            ("settings", "Configurações"),
-            ("developer", "Desenvolvedor")
+            ("browser", "youtube", "Navegador YouTube"),
+            ("single_download", "download", "Download Único"),
+            ("playlist", "playlist-music", "Baixar Playlist"),
+            ("audio", "music-note", "Baixar Áudio"),
+            ("history", "history", "Histórico de Downloads"),
+            ("settings", "cog", "Configurações"),
+            ("developer", "code-tags", "Desenvolvedor")
         ]
 
         self.drawer_buttons = {}
-        for screen_name, title in menu_items:
+        for screen_name, icon_name, title in menu_items:
             is_active = (screen_name == "browser")
             bg = Theme.RED_ACTION if is_active else [0, 0, 0, 0]
             fg = [1, 1, 1, 1] if is_active else Theme.get_text(self.is_dark)
 
             btn = CustomButton(
                 text=title,
+                icon=icon_name,
                 font_size="13sp",
                 bg_color=bg,
                 text_color=fg,
                 size_hint_y=None,
                 height=44,
-                radius=[8, 8, 8, 8]
+                radius=[10, 10, 10, 10]
             )
             btn.bind(on_release=lambda inst, s=screen_name: self._on_drawer_item_click(s))
             self.drawer_buttons[screen_name] = btn
@@ -362,7 +369,8 @@ class MultDownloadApp(MDApp):
             self.is_dark = not self.is_dark
 
         Window.clearcolor = Theme.get_bg(self.is_dark)
-        self.btn_theme.text = "☀️" if self.is_dark else "🌙"
+        theme_icon = "weather-sunny" if self.is_dark else "weather-night"
+        self.btn_theme.set_icon_and_text(icon=theme_icon)
         self.btn_theme.set_color(Theme.get_button_bg(self.is_dark), Theme.get_text(self.is_dark), Theme.get_border(self.is_dark))
         self.btn_menu.set_color(Theme.get_button_bg(self.is_dark), Theme.get_text(self.is_dark), Theme.get_border(self.is_dark))
 

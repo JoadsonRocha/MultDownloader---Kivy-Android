@@ -1,3 +1,4 @@
+import os
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
@@ -6,7 +7,32 @@ from kivy.uix.image import AsyncImage, Image
 from kivy.uix.progressbar import ProgressBar
 from kivy.graphics import Color, RoundedRectangle, Line
 from kivy.core.clipboard import Clipboard
+from kivy.core.text import LabelBase
 from ui.theme import Theme
+
+# ─────────────────────────────────────────────────────────────
+# Registro da Fonte de Ícones Material Design Vetoriais
+# ─────────────────────────────────────────────────────────────
+try:
+    import kivymd
+    from kivymd.icon_definitions import md_icons
+    _font_file = os.path.join(os.path.dirname(kivymd.__file__), 'fonts', 'materialdesignicons-webfont.ttf')
+    if os.path.exists(_font_file):
+        LabelBase.register(name='MDIcon', fn_regular=_font_file)
+        _HAS_MD_ICONS = True
+    else:
+        _HAS_MD_ICONS = False
+except Exception:
+    _HAS_MD_ICONS = False
+    md_icons = {}
+
+
+def get_icon(name, fallback=""):
+    """Retorna o caractere unicode do ícone vetorial Material Design."""
+    if _HAS_MD_ICONS and name in md_icons:
+        return md_icons[name]
+    return fallback
+
 
 class RoundedCard(BoxLayout):
     def __init__(self, bg_color=None, radius=[12, 12, 12, 12], border_color=None, **kwargs):
@@ -32,8 +58,22 @@ class RoundedCard(BoxLayout):
                 Color(*self.border_color)
                 Line(rounded_rectangle=(self.x, self.y, self.width, self.height, self.radius[0]), width=1.1)
 
+
 class CustomButton(Button):
-    def __init__(self, bg_color=Theme.RED_ACTION, text_color=[1, 1, 1, 1], radius=[8, 8, 8, 8], border_color=None, **kwargs):
+    def __init__(self, bg_color=Theme.RED_ACTION, text_color=[1, 1, 1, 1], radius=[8, 8, 8, 8], border_color=None, icon=None, **kwargs):
+        self.icon_name = icon
+        self.raw_text = kwargs.get('text', '')
+        self.markup = True
+        
+        # Formata texto com ícone se fornecido
+        if icon:
+            icon_char = get_icon(icon)
+            if icon_char:
+                if self.raw_text:
+                    kwargs['text'] = f"[font=MDIcon]{icon_char}[/font]  {self.raw_text}"
+                else:
+                    kwargs['text'] = f"[font=MDIcon]{icon_char}[/font]"
+
         super().__init__(**kwargs)
         self.background_color = (0, 0, 0, 0)
         self.background_normal = ''
@@ -45,6 +85,20 @@ class CustomButton(Button):
         self.bold = True
         self.bind(pos=self._update_canvas, size=self._update_canvas)
         self._update_canvas()
+
+    def set_icon_and_text(self, icon=None, text=None):
+        if icon is not None:
+            self.icon_name = icon
+        if text is not None:
+            self.raw_text = text
+            
+        icon_char = get_icon(self.icon_name) if self.icon_name else ""
+        if icon_char and self.raw_text:
+            self.text = f"[font=MDIcon]{icon_char}[/font]  {self.raw_text}"
+        elif icon_char:
+            self.text = f"[font=MDIcon]{icon_char}[/font]"
+        elif self.raw_text:
+            self.text = self.raw_text
 
     def set_color(self, bg_color, text_color=None, border_color=None):
         self.bg_color = bg_color
