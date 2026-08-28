@@ -66,15 +66,16 @@ class HistoryItemCard(RoundedCard):
         self.add_widget(top_box)
 
         # Linha Inferior: Botões de Ação
-        btn_box = BoxLayout(orientation='horizontal', spacing=8, size_hint_y=None, height=30)
+        btn_box = BoxLayout(orientation='horizontal', spacing=8, size_hint_y=None, height=32)
 
         # Botão Abrir
         btn_open = CustomButton(
             text="Abrir",
+            icon="open-in-new",
             font_size="11sp",
             bg_color=Theme.GREEN_SUCCESS,
-            size_hint_x=0.4,
-            radius=[6, 6, 6, 6]
+            size_hint_x=0.38,
+            radius=[8, 8, 8, 8]
         )
         btn_open.bind(on_release=lambda x: PlatformHelper.open_file(self.file_path))
         btn_box.add_widget(btn_open)
@@ -82,10 +83,11 @@ class HistoryItemCard(RoundedCard):
         # Botão Compartilhar
         btn_share = CustomButton(
             text="Compartilhar",
+            icon="share-variant",
             font_size="11sp",
             bg_color=Theme.BLUE_ACTION,
-            size_hint_x=0.4,
-            radius=[6, 6, 6, 6]
+            size_hint_x=0.42,
+            radius=[8, 8, 8, 8]
         )
         btn_share.bind(on_release=lambda x: PlatformHelper.share_file(self.file_path))
         btn_box.add_widget(btn_share)
@@ -93,10 +95,11 @@ class HistoryItemCard(RoundedCard):
         # Botão Excluir
         btn_del = CustomButton(
             text="Excluir",
+            icon="trash-can-outline",
             font_size="11sp",
             bg_color=Theme.RED_ACTION,
-            size_hint_x=0.2,
-            radius=[6, 6, 6, 6]
+            size_hint_x=0.20,
+            radius=[8, 8, 8, 8]
         )
         if on_delete:
             btn_del.bind(on_release=lambda x: on_delete(self.item_id))
@@ -120,18 +123,19 @@ class HistoryScreen(Screen):
             bold=True,
             color=Theme.get_text(self.app.is_dark),
             halign='left',
-            size_hint_x=0.7
+            size_hint_x=0.65
         )
         self.header_label.bind(size=lambda *x: setattr(self.header_label, 'text_size', (self.header_label.width, None)))
         top_row.add_widget(self.header_label)
 
         self.btn_clear = CustomButton(
-            text="Limpar Tudo",
+            text="Limpar",
+            icon="trash-can-outline",
             font_size="11sp",
             bg_color=Theme.RED_ACTION,
             size_hint=(None, 1),
             width=90,
-            radius=[6, 6, 6, 6]
+            radius=[8, 8, 8, 8]
         )
         self.btn_clear.bind(on_release=lambda x: self.clear_all_history())
         top_row.add_widget(self.btn_clear)

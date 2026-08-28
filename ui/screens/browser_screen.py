@@ -201,7 +201,8 @@ class YouTubeVideoCard(RoundedCard):
         btn_box = BoxLayout(orientation='horizontal', spacing=8, size_hint_y=None, height=36)
 
         btn_vid = CustomButton(
-            text="⬇ Vídeo",
+            text="Vídeo",
+            icon="video",
             font_size="12sp",
             bg_color=Theme.RED_ACTION,
             text_color=[1, 1, 1, 1],
@@ -213,7 +214,8 @@ class YouTubeVideoCard(RoundedCard):
         btn_box.add_widget(btn_vid)
 
         btn_aud = CustomButton(
-            text="🎵 Áudio",
+            text="Áudio",
+            icon="music-note",
             font_size="12sp",
             bg_color=Theme.BLUE_ACTION,
             text_color=[1, 1, 1, 1],
@@ -265,7 +267,7 @@ class BrowserScreen(Screen):
         self.nav_card = nav_card
 
         self.search_input = TextInput(
-            hint_text="🔍  Pesquisar no YouTube ou colar link...",
+            hint_text="Pesquisar no YouTube ou colar link...",
             multiline=False,
             font_size="13sp",
             background_normal='',
@@ -278,11 +280,12 @@ class BrowserScreen(Screen):
 
         self.btn_search = CustomButton(
             text="Buscar",
+            icon="magnify",
             font_size="12sp",
             bg_color=Theme.BLUE_ACTION,
             text_color=[1, 1, 1, 1],
             size_hint=(None, 1),
-            width=66,
+            width=80,
             radius=[8, 8, 8, 8]
         )
         self.btn_search.bind(on_release=lambda x: self.perform_search(self.search_input.text))
@@ -361,7 +364,7 @@ class BrowserScreen(Screen):
         else:
             self.search_input.text = q
 
-        self.btn_search.text = "⏳"
+        self.btn_search.set_icon_and_text(icon="magnify", text="...")
         self._show_skeletons()
 
         def _search_thread():
@@ -390,7 +393,7 @@ class BrowserScreen(Screen):
         self._skeleton_cards = []
 
     def _display_results(self, results):
-        self.btn_search.text = "Buscar"
+        self.btn_search.set_icon_and_text(icon="magnify", text="Buscar")
         self._stop_skeletons()
         self.feed_container.clear_widgets()
 
@@ -404,7 +407,7 @@ class BrowserScreen(Screen):
             self.feed_container.add_widget(card)
 
     def _display_error(self, err):
-        self.btn_search.text = "Buscar"
+        self.btn_search.set_icon_and_text(icon="magnify", text="Buscar")
         self._stop_skeletons()
         self.feed_container.clear_widgets()
 

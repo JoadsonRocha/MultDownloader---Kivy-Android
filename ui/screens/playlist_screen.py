@@ -52,25 +52,28 @@ class PlaylistScreen(Screen):
         # Botão Colar
         self.btn_paste = CustomButton(
             text="Colar",
-            font_size="12sp",
+            icon="content-paste",
+            font_size="11sp",
             bg_color=Theme.get_input_bg(self.app.is_dark),
             text_color=Theme.get_text(self.app.is_dark),
+            border_color=Theme.get_border(self.app.is_dark),
             size_hint=(None, 1),
-            width=58,
-            radius=[6, 6, 6, 6]
+            width=76,
+            radius=[8, 8, 8, 8]
         )
         self.btn_paste.bind(on_release=self.paste_from_clipboard)
         input_card.add_widget(self.btn_paste)
 
-        # Botão Buscar Playlist
+        # Botão Buscar
         self.btn_fetch = CustomButton(
             text="Buscar",
-            font_size="12sp",
+            icon="magnify",
+            font_size="11sp",
             bg_color=Theme.BLUE_ACTION,
             text_color=[1, 1, 1, 1],
             size_hint=(None, 1),
-            width=58,
-            radius=[6, 6, 6, 6]
+            width=80,
+            radius=[8, 8, 8, 8]
         )
         self.btn_fetch.bind(on_release=lambda x: self.fetch_playlist())
         input_card.add_widget(self.btn_fetch)
@@ -149,24 +152,26 @@ class PlaylistScreen(Screen):
         self.container.add_widget(quality_box)
 
         # 3. Tipo de Download: Vídeo ou Áudio
-        mode_box = BoxLayout(orientation='horizontal', spacing=10, size_hint_y=None, height=40)
+        mode_box = BoxLayout(orientation='horizontal', spacing=10, size_hint_y=None, height=42)
         self.btn_mode_video = CustomButton(
-            text="Baixar como Vídeo (MP4)",
+            text="Vídeo (MP4)",
+            icon="video",
             font_size="12sp",
             bg_color=Theme.RED_ACTION,
             text_color=[1, 1, 1, 1],
-            radius=[8, 8, 8, 8],
+            radius=[10, 10, 10, 10],
             size_hint_x=0.5
         )
         self.btn_mode_video.bind(on_release=lambda x: self.set_mode(is_audio=False))
         mode_box.add_widget(self.btn_mode_video)
 
         self.btn_mode_audio = CustomButton(
-            text="Baixar como Áudio (MP3)",
+            text="Áudio (MP3)",
+            icon="music-note",
             font_size="12sp",
             bg_color=Theme.get_input_bg(self.app.is_dark),
             text_color=Theme.get_text(self.app.is_dark),
-            radius=[8, 8, 8, 8],
+            radius=[10, 10, 10, 10],
             size_hint_x=0.5
         )
         self.btn_mode_audio.bind(on_release=lambda x: self.set_mode(is_audio=True))
@@ -176,13 +181,14 @@ class PlaylistScreen(Screen):
 
         # 4. Botão Baixar Playlist Completa
         self.btn_download_all = CustomButton(
-            text="BAIXAR PLAYLIST COMPLETA",
+            text="Baixar Playlist Completa",
+            icon="playlist-music",
             font_size="14sp",
             bg_color=Theme.GREEN_SUCCESS,
             text_color=[1, 1, 1, 1],
             size_hint_y=None,
-            height=46,
-            radius=[8, 8, 8, 8]
+            height=48,
+            radius=[10, 10, 10, 10]
         )
         self.btn_download_all.bind(on_release=lambda x: self.start_playlist_download())
         self.container.add_widget(self.btn_download_all)
